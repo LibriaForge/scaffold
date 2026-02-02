@@ -1,117 +1,275 @@
-# @libria/ts-barrels
+# @libria/scaffold
 
-A simple, fast TypeScript barrel file generator that recursively creates `index.ts` exports for your project.
+Forge your next project with lightning-fast scaffolding. A pluggable CLI that transforms blank directories into production-ready codebases in seconds.
 
-## What are Barrel Files?
+![Version](https://img.shields.io/npm/v/@libria/scaffold)
+![License](https://img.shields.io/npm/l/@libria/scaffold)
 
-Barrel files (typically `index.ts`) re-export modules from a directory, enabling cleaner imports:
+## ✨ Features
 
-```typescript
-// Without barrels
-import { UserService } from './services/user/UserService';
-import { AuthService } from './services/auth/AuthService';
-
-// With barrels
-import { UserService, AuthService } from './services';
-```
+- **Interactive CLI**: Guided project creation with sensible defaults
+- **Plugin System**: Extensible architecture for custom templates
+- **Dry Run Mode**: Preview what will be generated before committing
+- **Force Overwrite**: Safely regenerate existing projects
+- **Built-in Templates**: TypeScript libraries and more included
 
 ## Installation
 
 ```bash
-npm install @libria/ts-barrels
+npm install -g @libria/scaffold
+```
+
+Or use with npx:
+
+```bash
+npx lb-scaffold create
 ```
 
 ## CLI Usage
 
+### Quick Start
+
+Create a new project interactively:
+
 ```bash
-npx ts-barrels <root> [options]
+lb-scaffold create
+```
+
+You'll be prompted for:
+- Template choice (e.g., `ts-lib`)
+- Project name
+- Additional template-specific options
+- Whether to initialize git and install dependencies
+
+### Non-Interactive Mode
+
+Pass all options up-front for CI/CD or scripting:
+
+```bash
+lb-scaffold create -t ts-lib -n my-awesome-lib --dry-run
 ```
 
 ### Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `<root>` | Root folder to generate barrels in | (required) |
-| `--all` | Generate barrels recursively from leaves to root | `false` |
-| `--force` | Overwrite existing barrel files | `false` |
-| `--name <filename>` | Custom barrel filename | `index.ts` |
+| `-t, --template <name>` | Template to use | (prompted) |
+| `-n, --name <project-name>` | Name of the new project folder | (prompted, required) |
+| `--dry-run` | Show what would be generated without writing files | `false` |
+| `--force` | Overwrite existing project folder if it exists | `false` |
+| `-i, --interactive` | Run in interactive mode | `true` |
 
 ### Examples
 
-Generate barrels for the entire `src` directory:
+Create a TypeScript library:
 
 ```bash
-npx ts-barrels src --all
+lb-scaffold create -t ts-lib -n my-utils
 ```
 
-Generate with a custom filename:
+Preview generation without files:
 
 ```bash
-npx ts-barrels src --all --name barrel.ts
+lb-scaffold create -t ts-lib -n my-utils --dry-run
 ```
 
-Force regenerate all barrels:
+Force overwrite an existing project:
 
 ```bash
-npx ts-barrels src --all --force
+lb-scaffold create -t ts-lib -n my-utils --force
 ```
 
-## Programmatic Usage
+## Included Templates
+
+### ts-lib
+
+A modern TypeScript library template with:
+
+- ESLint + Prettier configuration
+- Vitest for testing
+- tsdown for fast builds
+- TypeScript path aliases
+- Package.json with proper exports
+- Comprehensive README and LICENSE
+
+## Creating Custom Template Plugins
+
+The scaffold CLI uses a plugin system powered by `@libria/plugin-loader`. Each template is a self-contained plugin.
+
+### Plugin Structure
+
+```
+templates/
+└── my-template/
+    ├── plugin.json          # Plugin metadata
+    ├── index.ts             # Plugin entry point
+    ├── types.ts             # TypeScript types
+    ├── my-template.ts       # Implementation
+    └── files/               # Template files
+        ├── package.json
+        ├── tsconfig.json
+        └── src/
+```
+
+### Step 1: Create plugin.json
+
+```json
+{
+    "name": "my-template",
+    "version": "1.0.0",
+    "type": "scaffold-template",
+    "main": "./index.ts",
+    "description": "My custom template"
+}
+```
+
+### Step 2: Define Types (types.ts)
 
 ```typescript
-import { generateBarrels } from '@libria/ts-barrels';
+import { ScaffoldTemplatePluginOptions } from "@libria/scaffold";
 
-await generateBarrels('./src', {
-  all: true,
-  force: false,
-  filename: 'index.ts'
-});
+export type MyTemplateOptions = ScaffoldTemplatePluginOptions & {
+    packageName: string;
+    description: string;
+    framework: 'react' | 'vue' | 'svelte';
+};
 ```
 
-## Skip Comment
-
-To prevent a barrel file from being overwritten, add a skip comment at the top:
+### Step 3: Implement the Plugin (my-template.ts)
 
 ```typescript
-// @libria/ts-barrels skip
-export * from './custom-export';
-export { specific } from './module';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs-extra';
+import { input, confirm } from '@inquirer/prompts';
+import { definePlugin } from '@libria/plugin-loader';
+import { SCAFFOLD_TEMPLATE_PLUGIN_TYPE, ScaffoldTemplatePlugin } from '@libria/scaffold';
+import { MyTemplateOptions } from './types';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const FILES_DIR = path.resolve(__dirname, 'files');
+
+export default definePlugin<ScaffoldTemplatePlugin>(
+    SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
+    'my-template',
+    {
+        argument: 'my-template',
+        async execute(options: ScaffoldTemplatePluginOptions): Promise<void> {
+            // Collect user input
+            const userOptions = await getInitialOptions(options);
+            // Generate the project
+            await generateProject(userOptions);
+            // Post-processing
+            await postProcess(userOptions);
+        }
+    }
+);
+
+async function getInitialOptions(
+    options: ScaffoldTemplatePluginOptions
+): Promise<MyTemplateOptions> {
+    const packageName = await input({
+        message: 'Package name:',
+        default: options.name,
+    });
+
+    const description = await input({
+        message: 'Description:',
+    });
+
+    const framework = await input({
+        message: 'Framework (react/vue/svelte):',
+        default: 'react',
+    });
+
+    return { packageName, description, framework, ...options };
+}
+
+async function generateProject(options: MyTemplateOptions): Promise<void> {
+    const { name, dryRun, force } = options;
+    const targetDir = path.resolve(process.cwd(), name);
+
+    // Handle existing directory
+    if (await fs.pathExists(targetDir)) {
+        if (!force) {
+            console.error(`Directory '${name}' already exists. Use --force to overwrite.`);
+            process.exit(1);
+        }
+        if (!dryRun) {
+            await fs.remove(targetDir);
+        }
+    }
+
+    // Create and copy files
+    if (!dryRun) {
+        await fs.ensureDir(targetDir);
+        await fs.copy(FILES_DIR, targetDir);
+        // Replace placeholders
+        await replacePlaceholders(targetDir, options);
+    }
+
+    console.log(`Project '${name}' created successfully!`);
+}
+
+async function replacePlaceholders(
+    targetDir: string,
+    options: MyTemplateOptions
+): Promise<void> {
+    // Replace {PACKAGE_NAME}, {DESCRIPTION}, etc. in files
+}
+
+async function postProcess(options: MyTemplateOptions): Promise<void> {
+    // Git init, npm install, etc.
+}
 ```
 
-Files with the skip comment are **always preserved**, even when using `--force`.
+### Step 4: Export the Plugin (index.ts)
 
-## Generated Output
-
-Given this structure:
-
-```
-src/
-  features/
-    auth/
-      login.ts
-      logout.ts
-    users/
-      create.ts
-      delete.ts
-  utils/
-    helpers.ts
+```typescript
+export { default } from './my-template';
+export * from './types';
 ```
 
-Running `npx ts-barrels src --all` generates:
+### Step 5: Create Template Files (files/)
 
+Use placeholders that will be replaced:
+
+`package.json`:
+```json
+{
+    "name": "{PACKAGE_NAME}",
+    "description": "{DESCRIPTION}",
+    "version": "1.0.0"
+}
 ```
-src/
-  index.ts          -> export * from './features'; export * from './utils';
-  features/
-    index.ts        -> export * from './auth'; export * from './users';
-    auth/
-      index.ts      -> export * from './login'; export * from './logout';
-    users/
-      index.ts      -> export * from './create'; export * from './delete';
-  utils/
-    index.ts        -> export * from './helpers';
+
+### Step 6: Build the Templates
+
+```bash
+npm run build:templates
+```
+
+This compiles your template plugins to the `dist/templates` directory.
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Build templates
+npm run build:templates
+
+# Run tests
+npm test
+
+# Lint and format
+npm run clean
 ```
 
 ## License
 
-MIT
+MIT - see LICENSE file for details

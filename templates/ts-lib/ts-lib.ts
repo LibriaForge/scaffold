@@ -81,7 +81,10 @@ async function generateProject(options: TsLibInitialOptions): Promise<void> {
     // Copy all files from files directory to target
     const entries = await fs.readdir(FILES_DIR, { withFileTypes: true });
     await copyEntries(FILES_DIR, targetDir, entries, dryRun);
-    await replacePlaceholders(targetDir, options);
+
+    if (!dryRun) {
+        await replacePlaceholders(targetDir, options);
+    }
 
     if (dryRun) {
         console.log('\n[dry-run] No files were actually created.');
