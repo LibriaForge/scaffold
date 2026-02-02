@@ -1,0 +1,77 @@
+{
+  "name": "@libria/scaffold",
+  "version": "1.0.0",
+  "description": "Simple TypeScript barrel generator for typescript projects",
+  "main": "dist/cli/index.cjs",
+  "module": "dist/cli/index.mjs",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/cli/index.d.cts",
+        "default": "./dist/cli/index.cjs"
+      },
+      "import": {
+        "types": "./dist/cli/index.d.mts",
+        "default": "./dist/cli/index.mjs"
+      }
+    }
+  },
+  "bin": {
+    "lb-scaffold": "./dist/cli/cli.mjs"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "build:templates": "tsdown -c tsdown-templates.config.ts",
+    "build:all": "npm run build && npm run build:templates",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write .",
+    "test:coverage": "vitest --coverage",
+    "clean": "npm run lint:fix && npm run format",
+    "build-and-publish": "npm run build && npx @libria/clean-publish build && npx @libria/clean-publish publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LibriaForge/scaffold.git"
+  },
+  "keywords": [
+    "scaffold",
+    "typescript"
+  ],
+  "author": "LibriaForge",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LibriaForge/scaffold/issues"
+  },
+  "homepage": "https://github.com/LibriaForge/scaffold#readme",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^25.0.10",
+    "@types/qs": "^6.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/parser": "^8.53.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "prettier": "^3.8.1",
+    "tsdown": "^0.20.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.53.1",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "@libria/plugin-loader": "^0.1.1",
+    "commander": "^14.0.3",
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.3.3",
+    "interactive-commander": "^0.6.0"
+  }
+}
