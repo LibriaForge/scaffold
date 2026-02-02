@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import path from 'path';
 import { fileURLToPath } from 'url';
-import {InteractiveCommand, InteractiveOption, Option} from 'interactive-commander';
-import {LibriaPlugin, loadAllPlugins} from "@libria/plugin-loader";
-import {SCAFFOLD_TEMPLATE_PLUGIN_TYPE, ScaffoldTemplatePlugin, ScaffoldTemplatePluginOptions} from "./core";
+
+import { LibriaPlugin, loadAllPlugins } from '@libria/plugin-loader';
+import { InteractiveCommand, InteractiveOption, Option } from 'interactive-commander';
+
 import {
     initConfig,
     addPluginGlob,
@@ -11,8 +12,13 @@ import {
     listPluginGlobs,
     getPluginPaths,
     findConfigPath,
-    loadConfig
-} from "./config";
+    loadConfig,
+} from './config';
+import {
+    SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
+    ScaffoldTemplatePlugin,
+    ScaffoldTemplatePluginOptions,
+} from './core';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGINS_FOLDER = path.resolve(__dirname, '../templates').replace(/\\/g, '/');
@@ -35,7 +41,9 @@ for (const pluginPath of userPluginPaths) {
         );
         userPlugins.push(...loaded);
     } catch (error) {
-        console.warn(`Warning: Failed to load plugins from '${pluginPath}': ${(error as Error).message}`);
+        console.warn(
+            `Warning: Failed to load plugins from '${pluginPath}': ${(error as Error).message}`
+        );
     }
 }
 
@@ -53,31 +61,30 @@ const templateChoices = plugins.map(plugin => plugin.name);
 
 const program = new InteractiveCommand();
 
-program
-    .name('lb-scaffold')
-    .description('Scaffold new projects from templates');
+program.name('lb-scaffold').description('Scaffold new projects from templates');
 
 // Create subcommand to enable interactive hooks
 program
     .command('create')
     .description('Create a new project from a template')
     .addOption(
-        new InteractiveOption('-t, --template <name>', 'Template to use')
-            .choices(templateChoices)
+        new InteractiveOption('-t, --template <name>', 'Template to use').choices(templateChoices)
     )
     .addOption(
-        new InteractiveOption('-n, --name <project-name>', 'Name of the new project folder')
-            .makeOptionMandatory(true)
+        new InteractiveOption(
+            '-n, --name <project-name>',
+            'Name of the new project folder'
+        ).makeOptionMandatory(true)
     )
     .addOption(
-        new Option('--dry-run', 'Show what would be generated without writing files')
-            .default(false)
+        new Option('--dry-run', 'Show what would be generated without writing files').default(false)
     )
     .addOption(
-        new InteractiveOption('--force', 'Overwrite existing project folder if it exists')
-            .default(false)
+        new InteractiveOption('--force', 'Overwrite existing project folder if it exists').default(
+            false
+        )
     )
-    .action(async (options: ScaffoldTemplatePluginOptions & {template: string}) => {
+    .action(async (options: ScaffoldTemplatePluginOptions & { template: string }) => {
         const plugin = plugins.find(plugin => plugin.api.argument === options.template);
         if (!plugin) {
             console.error(`Template '${options.template}' not found.`);
@@ -92,9 +99,7 @@ program
     });
 
 // Config command
-const configCommand = program
-    .command('config')
-    .description('Manage lb-scaffold configuration');
+const configCommand = program.command('config').description('Manage lb-scaffold configuration');
 
 configCommand
     .command('init')
@@ -176,11 +181,6 @@ configCommand
     });
 
 // Enable interactive mode by default
-program.addOption(
-    new Option('-i, --interactive', 'Run in interactive mode')
-        .default(true)
-);
+program.addOption(new Option('-i, --interactive', 'Run in interactive mode').default(true));
 
-await program
-    .interactive()
-    .parseAsync();
+await program.interactive().parseAsync();

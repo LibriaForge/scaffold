@@ -40,7 +40,7 @@ export function getDefaultConfigPath(): string {
  * Load the config file
  */
 export async function loadConfig(configPath?: string): Promise<LbScaffoldConfig> {
-    const resolvedPath = configPath ?? await findConfigPath();
+    const resolvedPath = configPath ?? (await findConfigPath());
 
     if (!resolvedPath) {
         return {};
@@ -81,9 +81,7 @@ export async function initConfig(configPath?: string): Promise<string> {
     }
 
     const defaultConfig: LbScaffoldConfig = {
-        plugins: [
-            './plugins/**'
-        ]
+        plugins: ['./plugins/**'],
     };
 
     await saveConfig(defaultConfig, resolvedPath);
@@ -105,14 +103,14 @@ export async function addPluginGlob(glob: string, configPath?: string): Promise<
     }
 
     config.plugins.push(glob);
-    await saveConfig(config, configPath ?? await findConfigPath() ?? getDefaultConfigPath());
+    await saveConfig(config, configPath ?? (await findConfigPath()) ?? getDefaultConfigPath());
 }
 
 /**
  * Remove a plugin glob pattern from the config
  */
 export async function removePluginGlob(glob: string, configPath?: string): Promise<void> {
-    const resolvedPath = configPath ?? await findConfigPath();
+    const resolvedPath = configPath ?? (await findConfigPath());
 
     if (!resolvedPath) {
         throw new Error('No config file found');
@@ -140,7 +138,7 @@ export async function listPluginGlobs(configPath?: string): Promise<string[]> {
  * Get absolute plugin paths from config globs
  */
 export async function getPluginPaths(configPath?: string): Promise<string[]> {
-    const resolvedConfigPath = configPath ?? await findConfigPath();
+    const resolvedConfigPath = configPath ?? (await findConfigPath());
 
     if (!resolvedConfigPath) {
         return [];

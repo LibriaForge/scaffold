@@ -33,12 +33,10 @@ const mockedConfirm = vi.mocked(confirm);
 
 describe('angular template', () => {
     let cleanup: () => Promise<void>;
-    let tmpDir: string;
 
     beforeEach(async () => {
         const temp = await useTempProject('angular');
         cleanup = temp.cleanup;
-        tmpDir = temp.tmp;
 
         vi.clearAllMocks();
 
