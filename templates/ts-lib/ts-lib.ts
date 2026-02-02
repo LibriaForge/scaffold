@@ -136,7 +136,7 @@ async function getInitialUserOptions(options: ScaffoldTemplatePluginOptions): Pr
 
     const version = await input({
         message: 'Version:',
-        default: '0.1.0',
+        default: '0.0.0',
     });
 
     const author = await input({

@@ -1,6 +1,6 @@
 {
   "name": "@libria/scaffold",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Simple TypeScript barrel generator for typescript projects",
   "main": "dist/cli/index.cjs",
   "module": "dist/cli/index.mjs",
