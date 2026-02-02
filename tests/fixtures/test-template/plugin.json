@@ -1,0 +1,5 @@
+{
+  "name": "test-template",
+  "pluginType": "scaffold-template",
+  "module": "./index.mjs"
+}

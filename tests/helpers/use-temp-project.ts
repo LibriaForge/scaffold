@@ -9,10 +9,14 @@ interface TempProjectResult {
     cleanup: () => Promise<void>;
 }
 
-export async function useTempProject(name?: string): Promise<TempProjectResult> {
+export async function useTempProject(fixture?: string, name?: string): Promise<TempProjectResult> {
     await fs.ensureDir(TMP_DIR);
     const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
     const tmp = await fs.mkdtemp(path.join(TMP_DIR, `scaffold-${timestamp}-${name ? name + '-' : ''}`));
+
+    if (fixture) {
+        await fs.copy(path.join(PROJECT_ROOT, 'tests/fixtures', fixture), tmp);
+    }
 
     const originalCwd = process.cwd();
     process.chdir(tmp);
