@@ -1,0 +1,5 @@
+{
+  "name": "ts-lib",
+  "pluginType": "scaffold-template",
+  "module": "./index.mjs"
+}
