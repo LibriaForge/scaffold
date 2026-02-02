@@ -1,6 +1,6 @@
 {
   "name": "@libria/scaffold",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Simple TypeScript barrel generator for typescript projects",
   "main": "dist/cli/index.cjs",
   "module": "dist/cli/index.mjs",
@@ -30,7 +30,7 @@
     "format": "prettier --write .",
     "test:coverage": "vitest --coverage",
     "clean": "npm run lint:fix && npm run format",
-    "build-and-publish": "npm run build && npx @libria/clean-publish build && npx @libria/clean-publish publish"
+    "build-and-publish": "npm run build:all && npx @libria/clean-publish build && npx @libria/clean-publish publish"
   },
   "repository": {
     "type": "git",
