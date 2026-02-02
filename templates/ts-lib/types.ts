@@ -1,7 +1,9 @@
 import {ScaffoldTemplatePluginOptions} from "../../src";
 
-export type TsLibOptions = ScaffoldTemplatePluginOptions & {
+export type TsLibInitialOptions = ScaffoldTemplatePluginOptions & {
     packageName: string,
     description: string,
-    license: string
+    version: string,
+    githubRepo: string,
+    author: string,
 };

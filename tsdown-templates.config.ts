@@ -11,7 +11,7 @@ export default defineConfig([
         minify: true,
         clean: true,
         copy: [
-            { from: 'templates/ts-lib/files/**/*', to: 'dist/templates/ts-lib/files' },
+            { from: 'templates/ts-lib/files', to: 'dist/templates/ts-lib' },
             { from: 'templates/ts-lib/plugin.json', to: 'dist/templates/ts-lib' },
         ]
     },

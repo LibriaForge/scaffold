@@ -37,7 +37,7 @@ program
             .default(false)
     )
     .addOption(
-        new Option('--force', 'Overwrite existing project folder if it exists')
+        new InteractiveOption('--force', 'Overwrite existing project folder if it exists')
             .default(false)
     )
     .action(async (options: ScaffoldTemplatePluginOptions & {template: string}) => {
@@ -46,7 +46,12 @@ program
             console.error(`Template '${options.template}' not found.`);
             process.exit(1);
         }
-        await plugin.api.execute(options);
+        try {
+            await plugin.api.execute(options);
+        } catch (error) {
+            console.error('Error creating project:', error);
+            process.exit(1);
+        }
     });
 
 // Enable interactive mode by default

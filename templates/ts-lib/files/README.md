@@ -1,115 +1,56 @@
-# @libria/ts-barrels
+# {PACKAGE_NAME}
 
-A simple, fast TypeScript barrel file generator that recursively creates `index.ts` exports for your project.
-
-## What are Barrel Files?
-
-Barrel files (typically `index.ts`) re-export modules from a directory, enabling cleaner imports:
-
-```typescript
-// Without barrels
-import { UserService } from './services/user/UserService';
-import { AuthService } from './services/auth/AuthService';
-
-// With barrels
-import { UserService, AuthService } from './services';
-```
+{DESCRIPTION}
 
 ## Installation
 
 ```bash
-npm install @libria/ts-barrels
+npm install {PACKAGE_NAME}
 ```
 
-## CLI Usage
-
-```bash
-npx ts-barrels <root> [options]
-```
-
-### Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `<root>` | Root folder to generate barrels in | (required) |
-| `--all` | Generate barrels recursively from leaves to root | `false` |
-| `--force` | Overwrite existing barrel files | `false` |
-| `--name <filename>` | Custom barrel filename | `index.ts` |
-
-### Examples
-
-Generate barrels for the entire `src` directory:
-
-```bash
-npx ts-barrels src --all
-```
-
-Generate with a custom filename:
-
-```bash
-npx ts-barrels src --all --name barrel.ts
-```
-
-Force regenerate all barrels:
-
-```bash
-npx ts-barrels src --all --force
-```
-
-## Programmatic Usage
+## Usage
 
 ```typescript
-import { generateBarrels } from '@libria/ts-barrels';
+import { add, subtract, multiply, divide } from '{PACKAGE_NAME}';
 
-await generateBarrels('./src', {
-  all: true,
-  force: false,
-  filename: 'index.ts'
-});
+console.log(add(2, 3));      // 5
+console.log(subtract(5, 3)); // 2
+console.log(multiply(4, 5)); // 20
+console.log(divide(10, 2));  // 5
 ```
 
-## Skip Comment
+## API
 
-To prevent a barrel file from being overwritten, add a skip comment at the top:
+### `add(a: number, b: number): number`
 
-```typescript
-// @libria/ts-barrels skip
-export * from './custom-export';
-export { specific } from './module';
-```
+Adds two numbers together.
 
-Files with the skip comment are **always preserved**, even when using `--force`.
+### `subtract(a: number, b: number): number`
 
-## Generated Output
+Subtracts the second number from the first.
 
-Given this structure:
+### `multiply(a: number, b: number): number`
 
-```
-src/
-  features/
-    auth/
-      login.ts
-      logout.ts
-    users/
-      create.ts
-      delete.ts
-  utils/
-    helpers.ts
-```
+Multiplies two numbers together.
 
-Running `npx ts-barrels src --all` generates:
+### `divide(a: number, b: number): number`
 
-```
-src/
-  index.ts          -> export * from './features'; export * from './utils';
-  features/
-    index.ts        -> export * from './auth'; export * from './users';
-    auth/
-      index.ts      -> export * from './login'; export * from './logout';
-    users/
-      index.ts      -> export * from './create'; export * from './delete';
-  utils/
-    index.ts        -> export * from './helpers';
+Divides the first number by the second. Throws an error if the divisor is zero.
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Build
+npm run build
+
+# Lint
+npm run lint
 ```
 
 ## License
