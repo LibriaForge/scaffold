@@ -93,6 +93,52 @@ A modern TypeScript library template with:
 - Package.json with proper exports
 - Comprehensive README and LICENSE
 
+### angular
+
+A complete Angular application template using the official Angular CLI. Supports:
+
+- Angular versions: Latest, 20, 19, 18, 17, 16
+- Stylesheet formats: SCSS, CSS, Sass, Less
+- Optional routing module
+- Optional Server-Side Rendering (SSR)
+- Git initialization (optional)
+- Dependency installation (optional)
+
+```bash
+lb-scaffold create -t angular -n my-angular-app
+```
+
+**Interactive prompts:**
+- Angular version selection
+- Stylesheet format (SCSS recommended)
+- Add routing module?
+- Enable SSR?
+- Skip git initialization?
+- Skip npm install?
+
+### nestjs
+
+A production-ready NestJS backend application using the official NestJS CLI. Includes:
+
+- TypeScript with strict mode (optional)
+- Package manager choice: npm, Yarn, or pnpm
+- Controller, Service, and Module structure
+- Unit test setup with Jest
+- E2E test configuration
+- Git initialization (optional)
+- Dependency installation (optional)
+
+```bash
+lb-scaffold create -t nestjs -n my-nest-api
+```
+
+**Interactive prompts:**
+- Package manager selection (npm, Yarn, pnpm)
+- Enable strict TypeScript mode?
+- Skip git initialization?
+- Skip package installation?
+
+
 ## Configuration
 
 The scaffold CLI supports a configuration file (`.lbscaffold`) that allows you to register custom plugin directories. This enables you to use your own templates alongside the built-in ones.
