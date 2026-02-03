@@ -9,6 +9,7 @@ Forge your next project with lightning-fast scaffolding. A pluggable CLI that tr
 
 - **Interactive CLI**: Guided project creation with sensible defaults
 - **Plugin System**: Extensible architecture for custom templates
+- **Configuration File**: Register custom plugin directories via `.lbscaffold`
 - **Dry Run Mode**: Preview what will be generated before committing
 - **Force Overwrite**: Safely regenerate existing projects
 - **Built-in Templates**: TypeScript libraries and more included
@@ -91,6 +92,95 @@ A modern TypeScript library template with:
 - TypeScript path aliases
 - Package.json with proper exports
 - Comprehensive README and LICENSE
+
+## Configuration
+
+The scaffold CLI supports a configuration file (`.lbscaffold`) that allows you to register custom plugin directories. This enables you to use your own templates alongside the built-in ones.
+
+### Config File Location
+
+The CLI searches for `.lbscaffold` starting from the current directory and walking up the directory tree. This allows you to have project-specific or workspace-level configurations.
+
+### Config Commands
+
+Initialize a new config file:
+
+```bash
+lb-scaffold config init
+```
+
+This creates a `.lbscaffold` file with a default plugin path:
+
+```json
+{
+  "plugins": ["./plugins/**"]
+}
+```
+
+Add a custom plugin directory:
+
+```bash
+lb-scaffold config add ./my-templates/**
+```
+
+Remove a plugin directory:
+
+```bash
+lb-scaffold config remove ./my-templates/**
+```
+
+List all configured plugin patterns:
+
+```bash
+lb-scaffold config list
+```
+
+Show the full config file:
+
+```bash
+lb-scaffold config show
+```
+
+### Config File Format
+
+The `.lbscaffold` config file is a JSON file with the following structure:
+
+```json
+{
+  "plugins": [
+    "./plugins/**",
+    "./custom-templates/**",
+    "/absolute/path/to/plugins/**"
+  ]
+}
+```
+
+The `plugins` array contains glob patterns pointing to directories containing template plugins. Paths can be:
+- **Relative**: Resolved relative to the config file location
+- **Absolute**: Used as-is
+
+### Plugin Override Behavior
+
+When a user plugin has the same name as a built-in plugin, the user plugin takes precedence. This allows you to customize or replace built-in templates.
+
+### Example: Using Custom Templates
+
+1. Create a config file:
+   ```bash
+   lb-scaffold config init
+   ```
+
+2. Add your custom templates directory:
+   ```bash
+   lb-scaffold config add ./my-company-templates/**
+   ```
+
+3. Create a template plugin in that directory (see [Creating Custom Template Plugins](#creating-custom-template-plugins))
+
+4. Your template will now appear in the template selection:
+   ```bash
+   lb-scaffold create
+   ```
 
 ## Creating Custom Template Plugins
 
