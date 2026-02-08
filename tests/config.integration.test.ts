@@ -14,11 +14,12 @@ import {
     removePluginGlob,
     listPluginGlobs,
     LbScaffoldConfig,
+    loadPackagePlugins,
 } from '../src';
 import {
-    SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
-    ScaffoldTemplatePlugin,
-    ScaffoldTemplatePluginOptions,
+    SCAFFOLD_TEMPLATE_PLUGIN_TYPE_V1,
+    ScaffoldTemplatePluginV1,
+    ScaffoldTemplatePluginOptionsV1,
 } from '../src';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,15 +30,16 @@ const FIXTURES_DIR = path.join(__dirname, 'fixtures');
  * This is the same pattern used in cli.ts to load plugins.
  */
 async function loadPluginsForCli(
-    builtInPluginsPath?: string
-): Promise<LibriaPlugin<ScaffoldTemplatePlugin>[]> {
+    builtInPluginsPath?: string,
+    packageDirs?: string[]
+): Promise<LibriaPlugin<ScaffoldTemplatePluginV1>[]> {
     // Load built-in plugins (if path provided)
-    const builtInPlugins: LibriaPlugin<ScaffoldTemplatePlugin>[] = [];
+    const builtInPlugins: LibriaPlugin<ScaffoldTemplatePluginV1>[] = [];
     if (builtInPluginsPath) {
         try {
-            const loaded = await loadAllPlugins<ScaffoldTemplatePlugin>(
+            const loaded = await loadAllPlugins<ScaffoldTemplatePluginV1>(
                 builtInPluginsPath,
-                SCAFFOLD_TEMPLATE_PLUGIN_TYPE
+                SCAFFOLD_TEMPLATE_PLUGIN_TYPE_V1
             );
             builtInPlugins.push(...loaded);
         } catch {
@@ -47,13 +49,13 @@ async function loadPluginsForCli(
 
     // Load user plugins from config
     const userPluginPaths = await getPluginPaths();
-    const userPlugins: LibriaPlugin<ScaffoldTemplatePlugin>[] = [];
+    const userPlugins: LibriaPlugin<ScaffoldTemplatePluginV1>[] = [];
 
     for (const pluginPath of userPluginPaths) {
         try {
-            const loaded = await loadAllPlugins<ScaffoldTemplatePlugin>(
+            const loaded = await loadAllPlugins<ScaffoldTemplatePluginV1>(
                 pluginPath,
-                SCAFFOLD_TEMPLATE_PLUGIN_TYPE
+                SCAFFOLD_TEMPLATE_PLUGIN_TYPE_V1
             );
             userPlugins.push(...loaded);
         } catch (error) {
@@ -61,12 +63,33 @@ async function loadPluginsForCli(
         }
     }
 
-    // Merge and deduplicate (user plugins override built-in with same name)
-    const pluginMap = new Map<string, LibriaPlugin<ScaffoldTemplatePlugin>>();
+    // Load plugins from npm packages
+    const pkgPlugins: LibriaPlugin<ScaffoldTemplatePluginV1>[] = [];
+    if (packageDirs) {
+        for (const packageDir of packageDirs) {
+            try {
+                const loaded = await loadPackagePlugins<ScaffoldTemplatePluginV1>(
+                    packageDir,
+                    SCAFFOLD_TEMPLATE_PLUGIN_TYPE_V1
+                );
+                pkgPlugins.push(...loaded);
+            } catch (error) {
+                console.warn(
+                    `Failed to load package from '${packageDir}': ${(error as Error).message}`
+                );
+            }
+        }
+    }
+
+    // Merge and deduplicate (package plugins override glob plugins, user overrides built-in)
+    const pluginMap = new Map<string, LibriaPlugin<ScaffoldTemplatePluginV1>>();
     for (const plugin of builtInPlugins) {
         pluginMap.set(plugin.name, plugin);
     }
     for (const plugin of userPlugins) {
+        pluginMap.set(plugin.name, plugin);
+    }
+    for (const plugin of pkgPlugins) {
         pluginMap.set(plugin.name, plugin);
     }
 
@@ -354,7 +377,7 @@ export default definePlugin('scaffold-template', 'another-template', {
             const plugins = await loadPluginsForCli();
             const plugin = plugins[0];
 
-            const options: ScaffoldTemplatePluginOptions = {
+            const options: ScaffoldTemplatePluginOptionsV1 = {
                 name: 'validation-test',
                 dryRun: true,
             };
@@ -449,6 +472,160 @@ export default definePlugin('scaffold-template', 'my-plugin', {
 
             expect(plugins).toHaveLength(1);
             expect(plugins[0].name).toBe('test-template');
+        });
+    });
+
+    describe('npm package plugins', () => {
+        const MOCK_PACKAGE_DIR = path.join(FIXTURES_DIR, 'mock-npm-package');
+
+        it('should load a single-template npm package (plugin.json at root)', async () => {
+            const plugins = await loadPluginsForCli(undefined, [MOCK_PACKAGE_DIR]);
+
+            expect(plugins).toHaveLength(1);
+            expect(plugins[0].name).toBe('mock-npm-template');
+            expect(plugins[0].api.argument).toBe('mock-npm-template');
+        });
+
+        it('should execute a plugin loaded from an npm package', async () => {
+            const plugins = await loadPluginsForCli(undefined, [MOCK_PACKAGE_DIR]);
+            const plugin = plugins.find(p => p.name === 'mock-npm-template');
+            expect(plugin).toBeDefined();
+
+            const projectName = 'npm-package-project';
+            await plugin!.api.execute({ name: projectName });
+
+            const markerPath = path.join(tmpDir, projectName, 'mock-npm-template.marker');
+            const markerExists = await fs
+                .stat(markerPath)
+                .then(() => true)
+                .catch(() => false);
+            expect(markerExists).toBe(true);
+
+            const markerContent = await fs.readFile(markerPath, 'utf-8');
+            expect(markerContent).toContain('Created by mock-npm-template plugin');
+            expect(markerContent).toContain(projectName);
+        });
+
+        it('should merge npm package plugins with glob plugins', async () => {
+            const pluginsDir = path.join(tmpDir, 'my-plugins');
+            await fs.mkdir(pluginsDir, { recursive: true });
+            await copyFixture('test-template', pluginsDir);
+
+            await saveConfig({ plugins: ['./my-plugins/**'] });
+
+            const plugins = await loadPluginsForCli(undefined, [MOCK_PACKAGE_DIR]);
+
+            expect(plugins).toHaveLength(2);
+            const names = plugins.map(p => p.name).sort();
+            expect(names).toEqual(['mock-npm-template', 'test-template']);
+        });
+
+        it('should let npm package plugins override glob plugins with same name', async () => {
+            // Create a glob plugin with the same name as the npm package plugin
+            const pluginsDir = path.join(tmpDir, 'my-plugins');
+            const overrideDir = path.join(pluginsDir, 'mock-npm-template');
+            await fs.mkdir(overrideDir, { recursive: true });
+
+            await fs.writeFile(
+                path.join(overrideDir, 'plugin.json'),
+                JSON.stringify({
+                    name: 'mock-npm-template',
+                    pluginType: 'scaffold-template',
+                    module: './index.mjs',
+                })
+            );
+            await fs.writeFile(
+                path.join(overrideDir, 'index.mjs'),
+                `
+import { definePlugin } from '@libria/plugin-loader';
+export default definePlugin('scaffold-template', 'mock-npm-template', {
+    argument: 'mock-npm-template',
+    version: 'glob-version',
+    async execute(options) {
+        console.log('Glob version');
+    }
+});
+`
+            );
+
+            await saveConfig({ plugins: ['./my-plugins/**'] });
+
+            // Package plugins are added after glob plugins, so they override
+            const plugins = await loadPluginsForCli(undefined, [MOCK_PACKAGE_DIR]);
+
+            expect(plugins).toHaveLength(1);
+            expect(plugins[0].name).toBe('mock-npm-template');
+            // Should NOT have the 'version' property from the glob plugin
+            expect((plugins[0].api as { version?: string }).version).toBeUndefined();
+        });
+
+        it('should load multi-template npm package (subdirectories with plugin.json)', async () => {
+            // Create a multi-template package structure
+            const multiPkgDir = path.join(tmpDir, 'multi-package');
+            await fs.mkdir(multiPkgDir, { recursive: true });
+
+            // Template A
+            const templateADir = path.join(multiPkgDir, 'template-a');
+            await fs.mkdir(templateADir, { recursive: true });
+            await fs.writeFile(
+                path.join(templateADir, 'plugin.json'),
+                JSON.stringify({
+                    name: 'template-a',
+                    pluginType: 'scaffold-template',
+                    module: './index.mjs',
+                })
+            );
+            await fs.writeFile(
+                path.join(templateADir, 'index.mjs'),
+                `
+import { definePlugin } from '@libria/plugin-loader';
+export default definePlugin('scaffold-template', 'template-a', {
+    argument: 'template-a',
+    async execute(options) {
+        console.log('Template A');
+    }
+});
+`
+            );
+
+            // Template B
+            const templateBDir = path.join(multiPkgDir, 'template-b');
+            await fs.mkdir(templateBDir, { recursive: true });
+            await fs.writeFile(
+                path.join(templateBDir, 'plugin.json'),
+                JSON.stringify({
+                    name: 'template-b',
+                    pluginType: 'scaffold-template',
+                    module: './index.mjs',
+                })
+            );
+            await fs.writeFile(
+                path.join(templateBDir, 'index.mjs'),
+                `
+import { definePlugin } from '@libria/plugin-loader';
+export default definePlugin('scaffold-template', 'template-b', {
+    argument: 'template-b',
+    async execute(options) {
+        console.log('Template B');
+    }
+});
+`
+            );
+
+            const plugins = await loadPluginsForCli(undefined, [multiPkgDir]);
+
+            expect(plugins).toHaveLength(2);
+            const names = plugins.map(p => p.name).sort();
+            expect(names).toEqual(['template-a', 'template-b']);
+        });
+
+        it('should handle package loading failure gracefully', async () => {
+            const nonExistentDir = path.join(tmpDir, 'nonexistent-package');
+
+            const plugins = await loadPluginsForCli(undefined, [nonExistentDir]);
+
+            // Should return empty, not throw
+            expect(plugins).toEqual([]);
         });
     });
 });

@@ -101,6 +101,6 @@ export default tseslint.config(
     },
     {
         // Ignore patterns (replaces .eslintignore)
-        ignores: ['node_modules/**', 'dist/**', 'build/**', '*.config.js', 'coverage/**', 'scripts/**', '.tmp/**', './tmp-clean-publish/**', './tests/fixtures/**'],
+        ignores: ['node_modules/**', 'dist/**', 'build/**', '*.config.js', 'coverage/**', 'scripts/**', '.tmp/**', '.tmp-clean-publish/**', 'tests/fixtures/**'],
     }
 );

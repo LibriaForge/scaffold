@@ -1,5 +1,5 @@
 {
-  "name": "angular",
+  "name": "mock-npm-template",
   "pluginType": "scaffold-template",
   "module": "./index.mjs"
 }

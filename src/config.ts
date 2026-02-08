@@ -3,6 +3,7 @@ import path from 'path';
 
 export interface LbScaffoldConfig {
     plugins?: string[];
+    packages?: string[];
 }
 
 const CONFIG_FILENAME = '.lbscaffold';
@@ -82,6 +83,7 @@ export async function initConfig(configPath?: string): Promise<string> {
 
     const defaultConfig: LbScaffoldConfig = {
         plugins: ['./plugins/**'],
+        packages: [],
     };
 
     await saveConfig(defaultConfig, resolvedPath);
@@ -154,4 +156,50 @@ export async function getPluginPaths(configPath?: string): Promise<string[]> {
         }
         return path.resolve(configDir, glob).replace(/\\/g, '/');
     });
+}
+
+/**
+ * Add an npm package name to the config
+ */
+export async function addPackage(packageName: string, configPath?: string): Promise<void> {
+    const config = await loadConfig(configPath);
+
+    if (!config.packages) {
+        config.packages = [];
+    }
+
+    if (config.packages.includes(packageName)) {
+        throw new Error(`Package '${packageName}' already exists in config`);
+    }
+
+    config.packages.push(packageName);
+    await saveConfig(config, configPath ?? (await findConfigPath()) ?? getDefaultConfigPath());
+}
+
+/**
+ * Remove an npm package name from the config
+ */
+export async function removePackage(packageName: string, configPath?: string): Promise<void> {
+    const resolvedPath = configPath ?? (await findConfigPath());
+
+    if (!resolvedPath) {
+        throw new Error('No config file found');
+    }
+
+    const config = await loadConfig(resolvedPath);
+
+    if (!config.packages || !config.packages.includes(packageName)) {
+        throw new Error(`Package '${packageName}' not found in config`);
+    }
+
+    config.packages = config.packages.filter(p => p !== packageName);
+    await saveConfig(config, resolvedPath);
+}
+
+/**
+ * List all npm package names in the config
+ */
+export async function listPackages(configPath?: string): Promise<string[]> {
+    const config = await loadConfig(configPath);
+    return config.packages ?? [];
 }

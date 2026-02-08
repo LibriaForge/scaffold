@@ -1,3 +1,33 @@
+export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';
+
+export type ScaffoldTemplatePluginOption<TValue = string | boolean | number> = {
+    readonly flags: string; // ex: --git-init
+    readonly required?: boolean;
+    readonly description: string;
+    readonly defaultValue?: TValue | TValue[];
+    readonly choices?: TValue[];
+};
+
+export type ResolvedOptions<TOpt extends object> = {
+    [k in keyof TOpt]: TOpt[k] extends ScaffoldTemplatePluginOption<infer TValue> ? TValue : never;
+};
+
+export type ExecuteOptions<TOpt extends object> = ScaffoldTemplatePluginOptions & {
+    [k in keyof TOpt]: TOpt[k] extends ScaffoldTemplatePluginOption<infer TValue> ? TValue : never;
+};
+
+export interface ScaffoldTemplatePlugin<TOpt extends object = object> {
+    readonly argument: string;
+
+    getOptions(options: ScaffoldTemplatePluginOptions & Partial<ResolvedOptions<TOpt>>): Promise<
+        Partial<{
+            [k in keyof TOpt]: ScaffoldTemplatePluginOption;
+        }>
+    >;
+
+    execute(options: ExecuteOptions<TOpt>): Promise<void>;
+}
+
 export type ScaffoldTemplatePluginOptions = {
     name: string;
     dryRun?: boolean;

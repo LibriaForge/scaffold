@@ -12,6 +12,9 @@ import {
     removePluginGlob,
     listPluginGlobs,
     getPluginPaths,
+    addPackage,
+    removePackage,
+    listPackages,
     LbScaffoldConfig
 } from '../src/config';
 
@@ -234,6 +237,84 @@ describe('config', () => {
 
             const result = await getPluginPaths();
             expect(result[0]).not.toContain('\\');
+        });
+    });
+
+    describe('addPackage', () => {
+        it('should add package to existing config', async () => {
+            await initConfig();
+
+            await addPackage('@libria/scaffold-ts-lib');
+
+            const packages = await listPackages();
+            expect(packages).toContain('@libria/scaffold-ts-lib');
+        });
+
+        it('should throw if package already exists', async () => {
+            await initConfig();
+            await addPackage('@libria/scaffold-ts-lib');
+
+            await expect(addPackage('@libria/scaffold-ts-lib')).rejects.toThrow(/already exists/);
+        });
+
+        it('should create packages array if not present', async () => {
+            const configPath = path.join(tmpDir, '.lbscaffold');
+            await fs.writeFile(configPath, JSON.stringify({ plugins: [] }));
+
+            await addPackage('@libria/scaffold-ts-lib');
+
+            const packages = await listPackages();
+            expect(packages).toContain('@libria/scaffold-ts-lib');
+        });
+    });
+
+    describe('removePackage', () => {
+        it('should remove package from config', async () => {
+            await initConfig();
+            await addPackage('@libria/scaffold-ts-lib');
+
+            await removePackage('@libria/scaffold-ts-lib');
+
+            const packages = await listPackages();
+            expect(packages).not.toContain('@libria/scaffold-ts-lib');
+        });
+
+        it('should throw if package does not exist', async () => {
+            await initConfig();
+
+            await expect(removePackage('@libria/nonexistent')).rejects.toThrow(/not found/);
+        });
+
+        it('should throw if no config file exists', async () => {
+            await expect(removePackage('@libria/scaffold-ts-lib')).rejects.toThrow(
+                /No config file/
+            );
+        });
+    });
+
+    describe('listPackages', () => {
+        it('should return empty array when no config exists', async () => {
+            const result = await listPackages();
+            expect(result).toEqual([]);
+        });
+
+        it('should return empty array when packages not defined', async () => {
+            const configPath = path.join(tmpDir, '.lbscaffold');
+            await fs.writeFile(configPath, '{}');
+
+            const result = await listPackages();
+            expect(result).toEqual([]);
+        });
+
+        it('should return all package names', async () => {
+            const config: LbScaffoldConfig = {
+                packages: ['@libria/scaffold-ts-lib', '@libria/scaffold-react'],
+            };
+            const configPath = path.join(tmpDir, '.lbscaffold');
+            await fs.writeFile(configPath, JSON.stringify(config));
+
+            const result = await listPackages();
+            expect(result).toEqual(['@libria/scaffold-ts-lib', '@libria/scaffold-react']);
         });
     });
 });

@@ -1,5 +1,0 @@
-{
-  "name": "nestjs",
-  "pluginType": "scaffold-template",
-  "module": "./index.mjs"
-}
