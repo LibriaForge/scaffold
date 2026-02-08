@@ -1,6 +1,6 @@
 {
     "name": "@libria/scaffold",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "A pluggable CLI that transforms blank directories into production-ready codebases in seconds",
     "main": "dist/cli/index.cjs",
     "module": "dist/cli/index.mjs",
