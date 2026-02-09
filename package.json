@@ -22,8 +22,7 @@
     "type": "module",
     "scripts": {
         "build": "tsdown",
-        "build:templates": "tsdown -c tsdown-templates.config.ts",
-        "build:all": "npm run build && npm run build:templates",
+        "build:all": "npm run build",
         "test": "vitest",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
@@ -75,7 +74,8 @@
         "interactive-commander": "^0.6.0"
     },
     "optionalDependencies": {
-        "@libria/scaffold-ts-lib": "^0.0.2",
-        "@libria/scaffold-angular": "^0.0.2"
+        "@libria/scaffold-angular": "0.0.3",
+        "@libria/scaffold-nestjs": "0.0.2",
+        "@libria/scaffold-ts-lib": "0.0.3"
     }
 }

@@ -1,21 +1,20 @@
 import fs from 'fs/promises';
 import { execFile } from 'node:child_process';
-import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 import path from 'path';
 
 const execFileAsync = promisify(execFile);
 
 /**
- * Resolve an npm package name to its installed directory.
+ * Resolve an npm package name to its installed root directory.
  * Tries local node_modules first (relative to cwd), then global.
  */
 export async function resolvePackageDir(packageName: string): Promise<string> {
     // Strategy 1: resolve from local node_modules via cwd
-    const localRequire = createRequire(path.join(process.cwd(), 'package.json'));
+    const localCandidate = path.join(process.cwd(), 'node_modules', packageName);
     try {
-        const packageJsonPath = localRequire.resolve(`${packageName}/package.json`);
-        return path.dirname(packageJsonPath);
+        await fs.access(path.join(localCandidate, 'package.json'));
+        return localCandidate;
     } catch {
         // Not found locally, try global
     }
@@ -23,10 +22,10 @@ export async function resolvePackageDir(packageName: string): Promise<string> {
     // Strategy 2: resolve from global node_modules
     const globalDir = await getGlobalNodeModulesDir();
     if (globalDir) {
-        const globalRequire = createRequire(path.join(globalDir, '_virtual.js'));
+        const globalCandidate = path.join(globalDir, packageName);
         try {
-            const packageJsonPath = globalRequire.resolve(`${packageName}/package.json`);
-            return path.dirname(packageJsonPath);
+            await fs.access(path.join(globalCandidate, 'package.json'));
+            return globalCandidate;
         } catch {
             // Not found globally either
         }

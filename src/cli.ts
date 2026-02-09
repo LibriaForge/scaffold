@@ -16,6 +16,7 @@ const userPluginPaths = await getPluginPaths();
 
 // Load plugins from npm packages
 const packageNames = await listPackages();
+
 const packagePaths = await Promise.all(
     packageNames.map(async name => {
         const dir = await resolvePackageDir(name);
@@ -23,6 +24,7 @@ const packagePaths = await Promise.all(
     })
 );
 
+console.log(packagePaths);
 const pluginManager = new PluginManager();
 await pluginManager.loadPlugins([PLUGINS_FOLDER, ...userPluginPaths, ...packagePaths]);
 

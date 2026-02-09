@@ -1,0 +1,8 @@
+{
+  "plugins": [],
+  "packages": [
+    "@libria/scaffold-angular",
+    "@libria/scaffold-nestjs",
+    "@libria/scaffold-ts-lib"
+  ]
+}

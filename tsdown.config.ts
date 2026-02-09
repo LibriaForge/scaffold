@@ -8,7 +8,7 @@ export default defineConfig([
         dts: true,
         sourcemap: true,
         clean: true,
-        minify: true,
+        minify: false,
     },
     {
         outDir: './dist/cli',
@@ -16,6 +16,6 @@ export default defineConfig([
         format: ['esm'],
         dts: true,
         sourcemap: true,
-        minify: true,
+        minify: false,
     }
 ]);
