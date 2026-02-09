@@ -74,8 +74,8 @@
         "interactive-commander": "^0.6.0"
     },
     "optionalDependencies": {
-        "@libria/scaffold-angular": "0.0.3",
-        "@libria/scaffold-nestjs": "0.0.2",
-        "@libria/scaffold-ts-lib": "0.0.3"
+        "@libria/scaffold-angular": "^0.0.4",
+        "@libria/scaffold-nestjs": "^0.0.3",
+        "@libria/scaffold-ts-lib": "^0.0.6"
     }
 }
