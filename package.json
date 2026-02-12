@@ -11,6 +11,7 @@
         "lint:fix": "npm run lint:fix --workspaces",
         "format": "npm run format --workspaces",
         "clean": "npm run clean --workspaces",
-        "bump": "node scripts/bump-version.mjs"
+        "bump": "node scripts/bump-version.mjs",
+        "build-and-publish": "npm run build-and-publish --workspaces"
     }
 }
