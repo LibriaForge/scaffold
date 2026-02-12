@@ -141,3 +141,6 @@ vite.config.ts.timestamp-*
 .idea
 .DS_Store
 /.claude/
+/.tmp-clean-publish/
+/.clean-publish.last-hash
+/.tmp/

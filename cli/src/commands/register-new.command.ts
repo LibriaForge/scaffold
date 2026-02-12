@@ -8,7 +8,7 @@ import {
     SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
     ScaffoldTemplatePluginOption,
     ScaffoldTemplatePluginOptions,
-} from '../core';
+} from '@libria/scaffold-core';
 
 // ── Prompting helpers (readline-based, zero dependencies) ────────────────────
 

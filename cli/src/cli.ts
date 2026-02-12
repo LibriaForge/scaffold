@@ -24,7 +24,6 @@ const packagePaths = await Promise.all(
     })
 );
 
-console.log(packagePaths);
 const pluginManager = new PluginManager();
 await pluginManager.loadPlugins([PLUGINS_FOLDER, ...userPluginPaths, ...packagePaths]);
 
