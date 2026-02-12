@@ -1,0 +1,103 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateFile snapshot (nestjs) > should match snapshot for standard NestJS merged properties 1`] = `
+"import {execSync} from 'child_process';
+import {definePlugin, PluginContext} from '@libria/plugin-loader';
+import type {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions} from '@libria/scaffold';
+
+export interface NestJSOptions {
+    version: ScaffoldTemplatePluginOption<string>;
+    language: ScaffoldTemplatePluginOption<string>;
+    packageManager: ScaffoldTemplatePluginOption<string>;
+    strict: ScaffoldTemplatePluginOption<boolean>;
+    skipGit: ScaffoldTemplatePluginOption<boolean>;
+    skipInstall: ScaffoldTemplatePluginOption<boolean>;
+}
+
+export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';
+
+export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
+    id: 'libria:scaffold:nestjs',
+    name: 'nestjs',
+    pluginType: SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
+
+    async create(_: PluginContext) {
+        return {
+            api: {
+                argument: 'nestjs',
+                getOptions: async (options) => {
+                    if (!options.version) {
+                        return {
+                            version: {
+                                flags: '--version <version>',
+                                description: 'NestJS version:',
+                                choices: ['11', '10'],
+                                defaultValue: '11',
+                            },
+                        };
+                    }
+
+                    const major = Number(options.version);
+                    const allOptions: Record<string, ScaffoldTemplatePluginOption> = {
+                        version: {
+                            flags: '--version <version>',
+                            description: 'NestJS version:',
+                            choices: ['11', '10'],
+                            defaultValue: '11',
+                        },
+                        language: {
+                            flags: '--language <value>',
+                            description: 'Which programming language?',
+                            choices: ['TypeScript', 'JavaScript'],
+                        },
+                        packageManager: {
+                            flags: '--package-manager <value>',
+                            description: 'Which package manager would you like to use?',
+                            choices: ['npm', 'yarn', 'pnpm'],
+                        },
+                        strict: {
+                            flags: '--strict',
+                            description: 'Enable TypeScript strict mode?',
+                            defaultValue: false,
+                        },
+                        skipGit: {
+                            flags: '--skip-git',
+                            description: 'Skip git initialization?',
+                            defaultValue: false,
+                        },
+                        skipInstall: {
+                            flags: '--skip-install',
+                            description: 'Skip installing dependencies?',
+                            defaultValue: false,
+                        },
+                    };
+
+                    return allOptions;
+                },
+                execute: async (options: ExecuteOptions<NestJSOptions>) => {
+                    const {name, dryRun} = options;
+                    const major = Number(options.version);
+                    const args: string[] = [];
+
+                    args.push(\`--language=\${options.language}\`);
+                    args.push(\`--package-manager=\${options.packageManager}\`);
+                    args.push(options.strict ? '--strict' : '--strict=false');
+                    if (options.skipGit) args.push('--skip-git');
+                    if (options.skipInstall) args.push('--skip-install');
+
+                    const cmd = \`npx @nestjs/cli@\${options.version} new \${name} \${args.join(' ')}\`;
+
+                    if (dryRun) {
+                        console.log('[dry-run] Would run:', cmd);
+                        return;
+                    }
+
+                    console.log('Running:', cmd);
+                    execSync(cmd, {stdio: 'inherit'});
+                },
+            },
+        };
+    },
+});
+"
+`;

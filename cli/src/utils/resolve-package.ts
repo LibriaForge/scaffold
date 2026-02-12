@@ -1,52 +1,38 @@
 import fs from 'fs/promises';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import path from 'path';
-
-const execFileAsync = promisify(execFile);
+import { fileURLToPath } from 'url';
 
 /**
  * Resolve an npm package name to its installed root directory.
- * Tries local node_modules first (relative to cwd), then global.
+ * Uses import.meta.resolve() to find the package entry point,
+ * then walks up to find the package.json — this works regardless
+ * of the package's `exports` configuration.
+ *
+ * Correctly handles:
+ * - npm workspaces (hoisted node_modules)
+ * - Symlinked packages
+ * - Global installs
  */
 export async function resolvePackageDir(packageName: string): Promise<string> {
-    // Strategy 1: resolve from local node_modules via cwd
-    const localCandidate = path.join(process.cwd(), 'node_modules', packageName);
     try {
-        await fs.access(path.join(localCandidate, 'package.json'));
-        return localCandidate;
-    } catch {
-        // Not found locally, try global
-    }
+        const entryUrl = import.meta.resolve(packageName);
+        let dir = path.dirname(fileURLToPath(entryUrl));
 
-    // Strategy 2: resolve from global node_modules
-    const globalDir = await getGlobalNodeModulesDir();
-    if (globalDir) {
-        const globalCandidate = path.join(globalDir, packageName);
-        try {
-            await fs.access(path.join(globalCandidate, 'package.json'));
-            return globalCandidate;
-        } catch {
-            // Not found globally either
+        // Walk up until we find the package.json
+        while (dir !== path.dirname(dir)) {
+            try {
+                await fs.access(path.join(dir, 'package.json'));
+                return dir;
+            } catch {
+                dir = path.dirname(dir);
+            }
         }
-    }
 
-    throw new Error(
-        `Package '${packageName}' not found. ` +
-            `Install it locally (npm install ${packageName}) or globally (npm install -g ${packageName}).`
-    );
-}
-
-/**
- * Get the global node_modules directory using npm root -g.
- */
-async function getGlobalNodeModulesDir(): Promise<string | null> {
-    try {
-        const { stdout } = await execFileAsync('npm', ['root', '-g'], { encoding: 'utf-8' });
-        const dir = stdout.trim();
-        await fs.access(dir);
-        return dir;
+        throw new Error('package.json not found');
     } catch {
-        return null;
+        throw new Error(
+            `Package '${packageName}' not found. ` +
+                `Install it locally (npm install ${packageName}) or globally (npm install -g ${packageName}).`
+        );
     }
 }

@@ -1,8 +1,9 @@
 {
   "plugins": [],
   "packages": [
-    "@libria/scaffold-angular",
-    "@libria/scaffold-nestjs",
-    "@libria/scaffold-ts-lib"
+    "@libria/scaffold-plugin-angular",
+    "@libria/scaffold-plugin-nestjs",
+    "@libria/scaffold-plugin-ts-lib",
+    "@libria/scaffold-plugin-ts-workspace"
   ]
 }

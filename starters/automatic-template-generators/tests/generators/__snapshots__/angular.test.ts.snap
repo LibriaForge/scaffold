@@ -1,0 +1,202 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateFile snapshot > should match snapshot for standard merged properties 1`] = `
+"import {execSync} from 'child_process';
+import {definePlugin, PluginContext} from '@libria/plugin-loader';
+import type {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions} from '@libria/scaffold';
+
+export interface AngularOptions {
+    version: ScaffoldTemplatePluginOption<string>;
+    style: ScaffoldTemplatePluginOption<string>;
+    packageManager: ScaffoldTemplatePluginOption<string>;
+    routing: ScaffoldTemplatePluginOption<boolean>;
+    ssr: ScaffoldTemplatePluginOption<boolean>;
+    standalone: ScaffoldTemplatePluginOption<boolean>;
+    strict: ScaffoldTemplatePluginOption<boolean>;
+    prefix: ScaffoldTemplatePluginOption<string>;
+    viewEncapsulation: ScaffoldTemplatePluginOption<string>;
+    inlineStyle: ScaffoldTemplatePluginOption<boolean>;
+    inlineTemplate: ScaffoldTemplatePluginOption<boolean>;
+    minimal: ScaffoldTemplatePluginOption<boolean>;
+    skipGit: ScaffoldTemplatePluginOption<boolean>;
+    skipInstall: ScaffoldTemplatePluginOption<boolean>;
+    skipTests: ScaffoldTemplatePluginOption<boolean>;
+}
+
+export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';
+
+const SUPPORTED_VERSIONS: Record<string, number[]> = {
+    packageManager: [21, 20],
+    ssr: [21, 20],
+    standalone: [21, 20],
+    viewEncapsulation: [18],
+    inlineStyle: [21],
+    inlineTemplate: [21],
+    minimal: [21],
+    skipGit: [21, 20],
+    skipInstall: [21],
+};
+
+export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
+    id: 'libria:scaffold:angular',
+    name: 'angular',
+    pluginType: SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
+
+    async create(_: PluginContext) {
+        return {
+            api: {
+                argument: 'angular',
+                getOptions: async (options) => {
+                    if (!options.version) {
+                        return {
+                            version: {
+                                flags: '--version <version>',
+                                description: 'Angular version:',
+                                choices: ['21', '20', '18'],
+                                defaultValue: '21',
+                            },
+                        };
+                    }
+
+                    const major = Number(options.version);
+                    const allOptions: Record<string, ScaffoldTemplatePluginOption> = {
+                        version: {
+                            flags: '--version <version>',
+                            description: 'Angular version:',
+                            choices: ['21', '20', '18'],
+                            defaultValue: '21',
+                        },
+                        style: {
+                            flags: '--style <value>',
+                            description: 'Which stylesheet format would you like to use?',
+                            choices: ['css', 'scss', 'sass', 'less'],
+                            defaultValue: 'css',
+                        },
+                        packageManager: {
+                            flags: '--package-manager <value>',
+                            description: 'Which package manager would you like to use?',
+                            choices: ['npm', 'yarn', 'pnpm', 'cnpm'],
+                        },
+                        routing: {
+                            flags: '--routing',
+                            description: 'Add routing?',
+                            defaultValue: true,
+                        },
+                        ssr: {
+                            flags: '--ssr',
+                            description: 'Enable Server-Side Rendering (SSR)?',
+                            defaultValue: false,
+                        },
+                        standalone: {
+                            flags: '--standalone',
+                            description: 'Use standalone components?',
+                            defaultValue: true,
+                        },
+                        strict: {
+                            flags: '--strict',
+                            description: 'Enable strict mode?',
+                            defaultValue: true,
+                        },
+                        prefix: {
+                            flags: '--prefix <value>',
+                            description: 'Component selector prefix:',
+                        },
+                        viewEncapsulation: {
+                            flags: '--view-encapsulation <value>',
+                            description: 'Which view encapsulation strategy?',
+                            choices: ['Emulated', 'None', 'ShadowDom'],
+                        },
+                        inlineStyle: {
+                            flags: '--inline-style',
+                            description: 'Use inline styles?',
+                            defaultValue: false,
+                        },
+                        inlineTemplate: {
+                            flags: '--inline-template',
+                            description: 'Use inline templates?',
+                            defaultValue: false,
+                        },
+                        minimal: {
+                            flags: '--minimal',
+                            description: 'Create a minimal project?',
+                            defaultValue: false,
+                        },
+                        skipGit: {
+                            flags: '--skip-git',
+                            description: 'Skip git initialization?',
+                            defaultValue: false,
+                        },
+                        skipInstall: {
+                            flags: '--skip-install',
+                            description: 'Skip installing dependencies?',
+                            defaultValue: false,
+                        },
+                        skipTests: {
+                            flags: '--skip-tests',
+                            description: 'Skip generating test files?',
+                            defaultValue: false,
+                        },
+                    };
+
+                    for (const [key, versions] of Object.entries(SUPPORTED_VERSIONS)) {
+                        if (!versions.includes(major)) {
+                            delete allOptions[key];
+                        }
+                    }
+
+                    return allOptions;
+                },
+                execute: async (options: ExecuteOptions<AngularOptions>) => {
+                    const {name, dryRun} = options;
+                    const major = Number(options.version);
+                    const args: string[] = [];
+
+                    args.push(\`--style=\${options.style}\`);
+                    if (SUPPORTED_VERSIONS.packageManager.includes(major)) {
+                        args.push(\`--package-manager=\${options.packageManager}\`);
+                    }
+                    args.push(options.routing ? '--routing' : '--routing=false');
+                    if (SUPPORTED_VERSIONS.ssr.includes(major)) {
+                        args.push(options.ssr ? '--ssr' : '--ssr=false');
+                    }
+                    if (SUPPORTED_VERSIONS.standalone.includes(major)) {
+                        args.push(options.standalone ? '--standalone' : '--standalone=false');
+                    }
+                    args.push(options.strict ? '--strict' : '--strict=false');
+                    if (options.prefix) args.push(\`--prefix=\${options.prefix}\`);
+                    if (SUPPORTED_VERSIONS.viewEncapsulation.includes(major)) {
+                        args.push(\`--view-encapsulation=\${options.viewEncapsulation}\`);
+                    }
+                    if (SUPPORTED_VERSIONS.inlineStyle.includes(major)) {
+                        if (options.inlineStyle) args.push('--inline-style');
+                    }
+                    if (SUPPORTED_VERSIONS.inlineTemplate.includes(major)) {
+                        if (options.inlineTemplate) args.push('--inline-template');
+                    }
+                    if (SUPPORTED_VERSIONS.minimal.includes(major)) {
+                        if (options.minimal) args.push('--minimal');
+                    }
+                    if (SUPPORTED_VERSIONS.skipGit.includes(major)) {
+                        if (options.skipGit) args.push('--skip-git');
+                    }
+                    if (SUPPORTED_VERSIONS.skipInstall.includes(major)) {
+                        if (options.skipInstall) args.push('--skip-install');
+                    }
+                    if (options.skipTests) args.push('--skip-tests');
+
+                    const cmd = \`npx @angular/cli@\${options.version} new \${name} \${args.join(' ')}\`;
+
+                    if (dryRun) {
+                        console.log('[dry-run] Would run:', cmd);
+                        return;
+                    }
+
+                    console.log('Running:', cmd);
+                    execSync(cmd, {stdio: 'inherit'});
+                },
+            },
+        };
+    },
+});
+"
+`;

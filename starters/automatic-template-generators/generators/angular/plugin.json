@@ -1,0 +1,9 @@
+{
+  "id": "libria:scaffold-generators:angular",
+  "name": "angular",
+  "pluginType": "scaffold-automatic-generators",
+  "version": "1.0.0",
+  "description": "Generates a template scaffold plugin for angular cli",
+  "module": "./index.mjs",
+  "types": "./index.d.ts"
+}

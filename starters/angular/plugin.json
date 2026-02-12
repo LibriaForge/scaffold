@@ -1,0 +1,9 @@
+{
+  "id": "libria:scaffold:angular",
+  "name": "angular",
+  "pluginType": "scaffold-template",
+  "version": "1.0.0",
+  "description": "Wrapper template for angular cli",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts"
+}

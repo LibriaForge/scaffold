@@ -2,7 +2,11 @@
     "private": true,
     "workspaces": [
         "core",
-        "cli"
+        "cli",
+        "starters/angular",
+        "starters/nestjs",
+        "starters/ts-lib",
+        "starters/ts-workspace"
     ],
     "scripts": {
         "build": "npm run build --workspaces",

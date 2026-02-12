@@ -174,6 +174,72 @@ function registerOption(cmd: Command, def: ScaffoldTemplatePluginOption): void {
     cmd.addOption(cmdOption);
 }
 
+// ── Plugin command registration helper ────────────────────────────────────────
+
+/**
+ * Registers a single command for a plugin (or subcommand), wiring up
+ * iterative option resolution and the execute action.
+ */
+async function registerPluginCommand(
+    parentCmd: Command,
+    plugin: ScaffoldTemplatePlugin,
+    commandName: string,
+    description: string,
+    subcommand?: string
+): Promise<void> {
+    const sub = parentCmd
+        .command(commandName)
+        .description(description)
+        .argument('<name>', 'Project name')
+        .option('--dry-run', 'Simulate without writing files', false)
+        .option('--force', 'Overwrite existing files', false)
+        .allowUnknownOption(true);
+
+    // Iteratively resolve options from argv so --help shows the right set.
+    const baseOpts: ScaffoldTemplatePluginOptions = { name: '', subcommand };
+    let optionDefs = await plugin.getOptions(baseOpts as ScaffoldTemplatePluginOptions &
+        Partial<Record<string, unknown>>);
+    let preCollected: Record<string, unknown> = { ...baseOpts };
+    let previousKeys = new Set<string>();
+
+    while (true) {
+        const currentKeys = new Set(Object.keys(optionDefs));
+        const newKeys = [...currentKeys].filter(k => !previousKeys.has(k));
+        if (newKeys.length === 0) break;
+
+        const parsed = preParseArgv(optionDefs as Record<string, ScaffoldTemplatePluginOption>);
+        preCollected = { ...preCollected, ...parsed };
+        previousKeys = currentKeys;
+
+        optionDefs = await plugin.getOptions(
+            preCollected as ScaffoldTemplatePluginOptions & Partial<Record<string, unknown>>
+        );
+    }
+
+    for (const [, def] of Object.entries(optionDefs)) {
+        if (def === undefined) continue;
+        registerOption(sub, def);
+    }
+
+    sub.action(async (name: string, cliOpts: Record<string, unknown>) => {
+        const collected: Record<string, unknown> = {
+            name,
+            subcommand,
+            dryRun: cliOpts.dryRun,
+            force: cliOpts.force,
+        };
+
+        await resolveOptions(plugin, collected, cliOpts);
+
+        closeRL();
+        await plugin.execute(
+            collected as ScaffoldTemplatePluginOptions & Record<string, unknown>
+        );
+    });
+}
+
+// ── Main registration ─────────────────────────────────────────────────────────
+
 export async function registerNewCommand(
     program: InteractiveCommand,
     pluginManager: PluginManager
@@ -185,59 +251,30 @@ export async function registerNewCommand(
     for (const meta of templates) {
         const plugin = pluginManager.getPlugin<ScaffoldTemplatePlugin>(meta.id);
 
-        const sub = newCmd
-            .command(plugin.argument)
-            .description(`Create a new ${plugin.argument} project`)
-            .argument('<name>', 'Project name')
-            .option('--dry-run', 'Simulate without writing files', false)
-            .option('--force', 'Overwrite existing files', false)
-            .allowUnknownOption(true);
+        if (plugin.subcommands?.length) {
+            // Plugin has subcommands — register a command group with nested subcommands
+            const group = newCmd
+                .command(plugin.argument)
+                .description(`${plugin.argument} commands`);
 
-        // Iteratively resolve options from argv so --help shows the right set.
-        // Phase 1: get initial options, pre-parse their values from argv
-        // Phase N: feed values back into getOptions until options stabilize
-        let optionDefs = await plugin.getOptions({ name: '' } as ScaffoldTemplatePluginOptions &
-            Partial<Record<string, unknown>>);
-        let preCollected: Record<string, unknown> = { name: '' };
-        let previousKeys = new Set<string>();
-
-        while (true) {
-            const currentKeys = new Set(Object.keys(optionDefs));
-            const newKeys = [...currentKeys].filter(k => !previousKeys.has(k));
-            if (newKeys.length === 0) break;
-
-            // Pre-parse any new option values from argv
-            const parsed = preParseArgv(optionDefs as Record<string, ScaffoldTemplatePluginOption>);
-            preCollected = { ...preCollected, ...parsed };
-            previousKeys = currentKeys;
-
-            // Ask plugin for options again with the parsed values
-            optionDefs = await plugin.getOptions(
-                preCollected as ScaffoldTemplatePluginOptions & Partial<Record<string, unknown>>
+            for (const subDef of plugin.subcommands) {
+                await registerPluginCommand(
+                    group,
+                    plugin,
+                    subDef.name,
+                    subDef.description,
+                    subDef.name
+                );
+            }
+        } else {
+            // No subcommands — register a single command directly
+            await registerPluginCommand(
+                newCmd,
+                plugin,
+                plugin.argument,
+                `Create a new ${plugin.argument} project`
             );
         }
-
-        // Register the fully-resolved options with Commander
-        for (const [, def] of Object.entries(optionDefs)) {
-            if (def === undefined) continue;
-            registerOption(sub, def);
-        }
-
-        sub.action(async (name: string, cliOpts: Record<string, unknown>) => {
-            const collected: Record<string, unknown> = {
-                name,
-                dryRun: cliOpts.dryRun,
-                force: cliOpts.force,
-            };
-
-            // Iteratively resolve all options (prompt for missing ones)
-            await resolveOptions(plugin, collected, cliOpts);
-
-            closeRL();
-            await plugin.execute(
-                collected as ScaffoldTemplatePluginOptions & Record<string, unknown>
-            );
-        });
     }
 
     return newCmd;
