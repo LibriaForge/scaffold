@@ -62,7 +62,7 @@
     },
     "dependencies": {
         "@libria/plugin-loader": "^2.0.0-alpha",
-        "@libria/scaffold-core": "^0.3.0",
+        "@libria/scaffold-core": "^0.3.1",
         "fs-extra": "^11.3.3"
     }
 }

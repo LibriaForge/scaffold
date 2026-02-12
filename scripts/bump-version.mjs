@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -9,17 +8,28 @@ if (!bump || !['patch', 'minor', 'major'].includes(bump)) {
     process.exit(1);
 }
 
+function bumpVersion(version, type) {
+    const [major, minor, patch] = version.split('.').map(Number);
+    switch (type) {
+        case 'major': return `${major + 1}.0.0`;
+        case 'minor': return `${major}.${minor + 1}.0`;
+        case 'patch': return `${major}.${minor}.${patch + 1}`;
+    }
+}
+
 const rootPkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const workspaceDirs = rootPkg.workspaces;
 
-// Bump version in all workspaces
-execSync(`npm version ${bump} --no-git-tag-version --workspaces`, { stdio: 'inherit' });
-
-// Build a map of workspace package name -> new version
+// Bump version in each workspace and build a name -> version map
 const workspaceVersions = new Map();
+
 for (const dir of workspaceDirs) {
-    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+    const pkgPath = join(dir, 'package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    pkg.version = bumpVersion(pkg.version, bump);
+    writeFileSync(pkgPath, JSON.stringify(pkg, null, 4) + '\n');
     workspaceVersions.set(pkg.name, pkg.version);
+    console.log(`${pkg.name} -> ${pkg.version}`);
 }
 
 // Update cross-workspace dependency references
@@ -46,4 +56,4 @@ for (const dir of workspaceDirs) {
 }
 
 const version = workspaceVersions.values().next().value;
-console.log(`All packages bumped to ${version}`);
+console.log(`\nAll packages bumped to ${version}`);
