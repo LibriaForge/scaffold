@@ -34,6 +34,8 @@ const SKIP_PROPERTIES = new Set([
     'description',
     'dependencies',
     'devDependencies',
+    'spec',
+    'specFileSuffix',
 ]);
 
 const FRIENDLY_MESSAGES: Record<string, string> = {

@@ -53,7 +53,7 @@ export function generateFile(
     // ── Imports
     lines.push(`import {execSync} from 'child_process';`);
     lines.push(`import {definePlugin, PluginContext} from '@libria/plugin-loader';`);
-    lines.push(`import type {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions} from '@libria/scaffold';`);
+    lines.push(`import type {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions} from '@libria/scaffold-core';`);
     lines.push(``);
 
     // ── Options interface (union of all options across all versions)

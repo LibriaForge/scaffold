@@ -10,6 +10,7 @@
     ],
     "scripts": {
         "build": "npm run build --workspaces",
+        "build:dev": "npm run build:dev --workspaces",
         "test": "npm run test --workspaces",
         "lint": "npm run lint --workspaces",
         "lint:fix": "npm run lint:fix --workspaces",

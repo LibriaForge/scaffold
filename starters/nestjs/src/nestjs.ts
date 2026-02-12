@@ -4,6 +4,9 @@ import type {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOption
 
 export interface NestJSOptions {
     version: ScaffoldTemplatePluginOption<string>;
+    language: ScaffoldTemplatePluginOption<string>;
+    packageManager: ScaffoldTemplatePluginOption<string>;
+    strict: ScaffoldTemplatePluginOption<boolean>;
 }
 
 export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';
@@ -37,6 +40,19 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                             choices: ['11', '10'],
                             defaultValue: '11',
                         },
+                        language: {
+                            flags: '--language <value>',
+                            description: 'Which programming language?',
+                        },
+                        packageManager: {
+                            flags: '--package-manager <value>',
+                            description: 'Which package manager would you like to use?',
+                        },
+                        strict: {
+                            flags: '--strict',
+                            description: 'Enable TypeScript strict mode?',
+                            defaultValue: false,
+                        },
                     };
 
                     return allOptions;
@@ -46,6 +62,9 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                     const major = Number(options.version);
                     const args: string[] = [];
 
+                    if (options.language) args.push(`--language=${options.language}`);
+                    if (options.packageManager) args.push(`--package-manager=${options.packageManager}`);
+                    args.push(options.strict ? '--strict' : '--strict=false');
 
                     const cmd = `npx @nestjs/cli@${options.version} new ${name} ${args.join(' ')}`;
 

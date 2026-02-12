@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsdown';
+const isDebug = process.env.NODE_ENV !== 'production';
 
 export default defineConfig([
     {
@@ -8,7 +9,7 @@ export default defineConfig([
         tsconfig: 'generators/tsconfig.generators.json',
         dts: true,
         sourcemap: true,
-        minify: true,
+        minify: !isDebug,
         clean: true,
         copy: [
             { from: 'generators/angular/plugin.json', to: 'dist/generators/angular' },
@@ -21,7 +22,7 @@ export default defineConfig([
         tsconfig: 'generators/tsconfig.generators.json',
         dts: true,
         sourcemap: true,
-        minify: true,
+        minify: !isDebug,
         clean: true,
         copy: [
             { from: 'generators/nestjs/plugin.json', to: 'dist/generators/nestjs' },

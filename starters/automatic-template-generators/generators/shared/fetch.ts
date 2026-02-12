@@ -50,10 +50,21 @@ export async function fetchSchemas(
 ): Promise<{ version: VersionInfo; schema: CliSchema }[]> {
     const results: { version: VersionInfo; schema: CliSchema }[] = [];
 
+    const registryData = await fetchJson<NpmRegistryData>(
+        `https://registry.npmjs.org/${config.schematicsPackage}`,
+    );
+    const allSchematicsVersions = Object.keys(registryData.versions);
+
     for (const vi of versions) {
+        const schematicsVersion = findBestVersionForMajor(allSchematicsVersions, vi.major);
+        if (!schematicsVersion) {
+            console.warn(`No schematics version found for ${config.schematicsPackage} major ${vi.major}, skipping`);
+            continue;
+        }
+
         try {
             const versionData = await fetchJson<NpmVersionData>(
-                `https://registry.npmjs.org/${config.schematicsPackage}/${vi.version}`,
+                `https://registry.npmjs.org/${config.schematicsPackage}/${schematicsVersion}`,
             );
             const tarballUrl = versionData.dist.tarball;
             const tgz = await fetchBuffer(tarballUrl);
@@ -63,11 +74,11 @@ export async function fetchSchemas(
                 const schema = JSON.parse(schemaBuffer.toString('utf-8')) as CliSchema;
                 results.push({version: vi, schema});
             } else {
-                console.warn(`schema.json not found in tarball for ${config.schematicsPackage}@${vi.version}`);
+                console.warn(`schema.json not found in tarball for ${config.schematicsPackage}@${schematicsVersion}`);
             }
         } catch (err) {
             console.warn(
-                `Could not fetch schema for ${config.schematicsPackage}@${vi.version}: ${err instanceof Error ? err.message : err}`,
+                `Could not fetch schema for ${config.schematicsPackage}@${schematicsVersion}: ${err instanceof Error ? err.message : err}`,
             );
         }
     }

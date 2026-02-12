@@ -18,7 +18,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "NODE_ENV=production tsdown",
+    "build": "cross-env NODE_ENV=production tsdown",
     "build:dev": "tsdown",
     "test": "vitest",
     "lint": "eslint . --ext .ts",
@@ -49,6 +49,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^2.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-import": "^2.30.0",
