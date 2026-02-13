@@ -68,7 +68,7 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
-    "@libria/plugin-loader": "^2.0.0-alpha",
+    "@libria/plugin-loader": "^2.0.0",
     "commander": "^14.0.3"
   }
 }
