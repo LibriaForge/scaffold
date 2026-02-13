@@ -9,10 +9,11 @@ Forge your next project with lightning-fast scaffolding. A pluggable CLI that tr
 
 - **Interactive CLI**: Guided project creation with sensible defaults
 - **Plugin System**: Extensible architecture for custom templates
-- **Configuration File**: Register custom plugin directories via `.lbscaffold`
+- **Configuration File**: Register custom plugin directories and npm packages via `.lbscaffold.json`
+- **NPM Package Support**: Load templates from npm packages
 - **Dry Run Mode**: Preview what will be generated before committing
 - **Force Overwrite**: Safely regenerate existing projects
-- **Built-in Templates**: TypeScript libraries and more included
+- **Template Plugins**: Angular, NestJS, TypeScript libraries, and workspaces
 
 ## Installation
 
@@ -23,7 +24,7 @@ npm install -g @libria/scaffold
 Or use with npx:
 
 ```bash
-npx lb-scaffold create
+npx lb-scaffold new
 ```
 
 ## CLI Usage
@@ -33,54 +34,59 @@ npx lb-scaffold create
 Create a new project interactively:
 
 ```bash
-lb-scaffold create
+lb-scaffold new
 ```
 
-You'll be prompted for:
-- Template choice (e.g., `ts-lib`)
-- Project name
-- Additional template-specific options
-- Whether to initialize git and install dependencies
+You'll be prompted to select a template, and then enter:
+- Project name (required)
+- Additional template-specific options (e.g., framework version, styles format)
+- Whether to skip git initialization (if supported)
 
 ### Non-Interactive Mode
 
 Pass all options up-front for CI/CD or scripting:
 
 ```bash
-lb-scaffold create -t ts-lib -n my-awesome-lib --dry-run
+lb-scaffold new ts-lib my-awesome-lib --dry-run
 ```
 
 ### Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-t, --template <name>` | Template to use | (prompted) |
-| `-n, --name <project-name>` | Name of the new project folder | (prompted, required) |
+| `<name>` | Name of the new project folder | (required) |
 | `--dry-run` | Show what would be generated without writing files | `false` |
 | `--force` | Overwrite existing project folder if it exists | `false` |
-| `-i, --interactive` | Run in interactive mode | `true` |
+
+Template-specific options are available per template and will be shown in `--help`.
 
 ### Examples
 
 Create a TypeScript library:
 
 ```bash
-lb-scaffold create -t ts-lib -n my-utils
+lb-scaffold new ts-lib my-utils
 ```
 
 Preview generation without files:
 
 ```bash
-lb-scaffold create -t ts-lib -n my-utils --dry-run
+lb-scaffold new ts-lib my-utils --dry-run
 ```
 
 Force overwrite an existing project:
 
 ```bash
-lb-scaffold create -t ts-lib -n my-utils --force
+lb-scaffold new ts-lib my-utils --force
 ```
 
-## Included Templates
+Create a new Angular application with specific options:
+
+```bash
+lb-scaffold new angular my-app --version 20 --style scss --routing --ssr
+```
+
+## Optional Templates
 
 ### ts-lib
 
@@ -105,7 +111,7 @@ A complete Angular application template using the official Angular CLI. Supports
 - Dependency installation (optional)
 
 ```bash
-lb-scaffold create -t angular -n my-angular-app
+lb-scaffold new angular my-angular-app
 ```
 
 **Interactive prompts:**
@@ -129,7 +135,7 @@ A production-ready NestJS backend application using the official NestJS CLI. Inc
 - Dependency installation (optional)
 
 ```bash
-lb-scaffold create -t nestjs -n my-nest-api
+lb-scaffold new nestjs my-nest-api
 ```
 
 **Interactive prompts:**
@@ -138,14 +144,34 @@ lb-scaffold create -t nestjs -n my-nest-api
 - Skip git initialization?
 - Skip package installation?
 
+### ts-workspace
+
+A TypeScript workspace (monorepo) template using pnpm workspaces. Creates a monorepo with multiple project types:
+
+- TypeScript libraries (ts-lib)
+- Angular applications
+- NestJS backends
+- Shared packages
+- pnpm workspace configuration
+- Turbo or Nx for monorepo tooling (optional)
+
+```bash
+lb-scaffold new ts-workspace my-monorepo
+```
+
+**Interactive prompts:**
+- Project types to include
+- Monorepo tool (Turbo, Nx, or none)
+- Skip git initialization?
+- Skip package installation?
 
 ## Configuration
 
-The scaffold CLI supports a configuration file (`.lbscaffold`) that allows you to register custom plugin directories. This enables you to use your own templates alongside the built-in ones.
+The scaffold CLI supports a configuration file (`.lbscaffold.json`) that allows you to register custom plugin directories and npm packages. This enables you to use your own templates alongside the built-in ones.
 
 ### Config File Location
 
-The CLI searches for `.lbscaffold` starting from the current directory and walking up the directory tree. This allows you to have project-specific or workspace-level configurations.
+The CLI searches for `.lbscaffold.json` starting from the current directory and walking up the directory tree. This allows you to have project-specific or workspace-level configurations.
 
 ### Config Commands
 
@@ -155,11 +181,12 @@ Initialize a new config file:
 lb-scaffold config init
 ```
 
-This creates a `.lbscaffold` file with a default plugin path:
+This creates a `.lbscaffold.json` file with a default plugin path:
 
 ```json
 {
-  "plugins": ["./plugins/**"]
+  "plugins": ["./plugins/**"],
+  "packages": []
 }
 ```
 
@@ -189,7 +216,7 @@ lb-scaffold config show
 
 ### Config File Format
 
-The `.lbscaffold` config file is a JSON file with the following structure:
+The `.lbscaffold.json` config file is a JSON file with the following structure:
 
 ```json
 {
@@ -197,6 +224,10 @@ The `.lbscaffold` config file is a JSON file with the following structure:
     "./plugins/**",
     "./custom-templates/**",
     "/absolute/path/to/plugins/**"
+  ],
+  "packages": [
+    "@libria/scaffold-plugin-angular",
+    "@libria/scaffold-plugin-nestjs"
   ]
 }
 ```
@@ -204,6 +235,28 @@ The `.lbscaffold` config file is a JSON file with the following structure:
 The `plugins` array contains glob patterns pointing to directories containing template plugins. Paths can be:
 - **Relative**: Resolved relative to the config file location
 - **Absolute**: Used as-is
+
+The `packages` array contains npm package names that provide scaffold template plugins. These packages will be loaded via node_modules.
+
+### Adding NPM Packages
+
+Add an npm package as a plugin source:
+
+```bash
+lb-scaffold config add-package @your-org/scaffold-plugin-my-template
+```
+
+Remove an npm package:
+
+```bash
+lb-scaffold config remove-package @your-org/scaffold-plugin-my-template
+```
+
+List all configured npm packages:
+
+```bash
+lb-scaffold config list-packages
+```
 
 ### Plugin Override Behavior
 
@@ -225,7 +278,7 @@ When a user plugin has the same name as a built-in plugin, the user plugin takes
 
 4. Your template will now appear in the template selection:
    ```bash
-   lb-scaffold create
+   lb-scaffold new
    ```
 
 ## Creating Custom Template Plugins
@@ -262,7 +315,10 @@ templates/
 ### Step 2: Define Types (types.ts)
 
 ```typescript
-import { ScaffoldTemplatePluginOptions } from "@libria/scaffold-core";
+import {
+    ScaffoldTemplatePluginOptions,
+    ScaffoldTemplatePluginOption,
+} from "@libria/scaffold-core";
 
 export type MyTemplateOptions = ScaffoldTemplatePluginOptions & {
     packageName: string;
@@ -277,7 +333,6 @@ export type MyTemplateOptions = ScaffoldTemplatePluginOptions & {
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
-import { input, confirm } from '@inquirer/prompts';
 import { definePlugin } from '@libria/plugin-loader';
 import { SCAFFOLD_TEMPLATE_PLUGIN_TYPE, ScaffoldTemplatePlugin } from '@libria/scaffold-core';
 import { MyTemplateOptions } from './types';
@@ -291,35 +346,34 @@ export default definePlugin<ScaffoldTemplatePlugin>(
     {
         argument: 'my-template',
         async execute(options: ScaffoldTemplatePluginOptions): Promise<void> {
-            // Collect user input
-            const userOptions = await getInitialOptions(options);
+            // Collect user input (via getOptions - see ScaffoldTemplatePlugin)
+            const userOptions = options as MyTemplateOptions;
             // Generate the project
             await generateProject(userOptions);
             // Post-processing
             await postProcess(userOptions);
-        }
+        },
+        async getOptions(options: ScaffoldTemplatePluginOptions): Promise<Record<string, ScaffoldTemplatePluginOption>> {
+            return {
+                packageName: {
+                    flags: '-p, --package-name <name>',
+                    description: 'Package name',
+                    defaultValue: options.name,
+                },
+                description: {
+                    flags: '-d, --description <text>',
+                    description: 'Project description',
+                },
+                framework: {
+                    flags: '-f, --framework <name>',
+                    description: 'Framework',
+                    defaultValue: 'react',
+                    choices: ['react', 'vue', 'svelte'],
+                },
+            };
+        },
     }
 );
-
-async function getInitialOptions(
-    options: ScaffoldTemplatePluginOptions
-): Promise<MyTemplateOptions> {
-    const packageName = await input({
-        message: 'Package name:',
-        default: options.name,
-    });
-
-    const description = await input({
-        message: 'Description:',
-    });
-
-    const framework = await input({
-        message: 'Framework (react/vue/svelte):',
-        default: 'react',
-    });
-
-    return { packageName, description, framework, ...options };
-}
 
 async function generateProject(options: MyTemplateOptions): Promise<void> {
     const { name, dryRun, force } = options;

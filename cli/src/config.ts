@@ -6,7 +6,7 @@ export interface LbScaffoldConfig {
     packages?: string[];
 }
 
-const CONFIG_FILENAME = '.lbscaffold';
+const CONFIG_FILENAME = '.lbscaffold.json';
 
 /**
  * Find the config file by searching up the directory tree

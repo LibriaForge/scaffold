@@ -20,7 +20,7 @@ export async function registerConfigCommand(
 
     configCommand
         .command('init')
-        .description('Initialize a new .lbscaffold config file in the current directory')
+        .description('Initialize a new .lbscaffold.json config file in the current directory')
         .action(async () => {
             try {
                 const configPath = await initConfig();
@@ -63,7 +63,7 @@ export async function registerConfigCommand(
         .action(async () => {
             const configPath = await findConfigPath();
             if (!configPath) {
-                console.log('No .lbscaffold config file found.');
+                console.log('No .lbscaffold.json config file found.');
                 console.log('Run "lb-scaffold config init" to create one.');
                 return;
             }
@@ -95,7 +95,7 @@ export async function registerConfigCommand(
         .action(async () => {
             const configPath = await findConfigPath();
             if (!configPath) {
-                console.log('No .lbscaffold config file found.');
+                console.log('No .lbscaffold.json config file found.');
                 console.log('Run "lb-scaffold config init" to create one.');
                 return;
             }
@@ -138,7 +138,7 @@ export async function registerConfigCommand(
         .action(async () => {
             const configPath = await findConfigPath();
             if (!configPath) {
-                console.log('No .lbscaffold config file found.');
+                console.log('No .lbscaffold.json config file found.');
                 console.log('Run "lb-scaffold config init" to create one.');
                 return;
             }
