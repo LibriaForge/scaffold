@@ -1,5 +1,0 @@
-{
-  "name": "angular",
-  "pluginType": "scaffold-template",
-  "module": "./index.mjs"
-}

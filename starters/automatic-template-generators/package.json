@@ -1,0 +1,74 @@
+{
+  "name": "automatic-template-generators",
+  "version": "0.0.0",
+  "description": "Generates automatically template plugins that wrap existing CLIs, for instance, angular cli",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      }
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "build": "cross-env NODE_ENV=production tsdown",
+    "build:dev": "tsdown",
+    "build:generators": "cross-env NODE_ENV=production tsdown -c tsdown-generators.config.ts",
+    "build:generators:dev": "tsdown -c tsdown-generators.config.ts",
+    "build:all": "npm run build && npm run build:generators",
+    "build:all:dev": "npm run build:dev && npm run build:generators:dev",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write .",
+    "test:coverage": "vitest --coverage",
+    "clean": "npm run lint:fix && npm run format",
+    "generate:angular": "node ./dist/cli/cli.mjs generate angular --output ../angular/src/angular.ts --force",
+    "generate:nestjs": "node ./dist/cli/cli.mjs generate nestjs --output ../nestjs/src/nestjs.ts --force",
+    "generate:all": "npm run generate:angular && npm run generate:nestjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LibriaForge/scaffold-starters.git"
+  },
+  "keywords": [
+    "typescript"
+  ],
+  "author": "LibriaForge",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LibriaForge/scaffold-starters/issues"
+  },
+  "homepage": "https://github.com/LibriaForge/scaffold-starters#readme",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-unused-imports": "^4.0.0",
+    "prettier": "^3.0.0",
+    "tsdown": "^0.20.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "@libria/plugin-loader": "^2.0.0-alpha",
+    "commander": "^14.0.3"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "tmpDir": ".tmp-clean-publish",
+  "copy": [
+    "dist/**",
+    "README.md",
+    "LICENSE",
+    "template-files/**",
+    "plugin.json"
+  ],
+  "packageJson": {
+    "remove": {
+      "scripts": true,
+      "devDependencies": true
+    }
+  }
+}

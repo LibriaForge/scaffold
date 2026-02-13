@@ -1,0 +1,19 @@
+{
+  "id": "libria:scaffold:ts-workspace",
+  "name": "ts-workspace",
+  "pluginType": "scaffold-template",
+  "version": "1.0.0",
+  "description": "",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "dependencies": [{
+    "id": "libria:scaffold:ts-lib",
+    "version": "^1.0.0"
+  }, {
+    "id": "libria:scaffold:angular",
+    "version": "^1.0.0"
+  }, {
+    "id": "libria:scaffold:nestjs",
+    "version": "^1.0.0"
+  }]
+}

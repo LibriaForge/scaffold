@@ -1,0 +1,9 @@
+{
+  "id": "libria:scaffold-generators:nestjs",
+  "name": "nestjs",
+  "pluginType": "scaffold-automatic-generators",
+  "version": "1.0.0",
+  "description": "Generates a template scaffold plugin for NestJS cli",
+  "module": "./index.mjs",
+  "types": "./index.d.ts"
+}
