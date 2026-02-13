@@ -1,19 +1,18 @@
-import {exec} from 'child_process';
+import { exec } from 'child_process';
 import path from 'path';
-import {fileURLToPath} from 'url';
-import {promisify} from 'util';
+import { fileURLToPath } from 'url';
+import { promisify } from 'util';
 
-import {definePlugin, PluginContext} from '@libria/plugin-loader';
-import fs from 'fs-extra';
-
-import {Options} from './types';
+import { definePlugin, PluginContext } from '@libria/plugin-loader';
 import {
     ExecuteOptions,
     replacePlaceholders,
     SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
-    ScaffoldTemplatePlugin
-} from "@libria/scaffold-core";
+    ScaffoldTemplatePlugin,
+} from '@libria/scaffold-core';
+import fs from 'fs-extra';
 
+import { Options } from './types';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FILES_DIR = path.resolve(__dirname, '..', 'template-files');
@@ -84,7 +83,7 @@ export default definePlugin<ScaffoldTemplatePlugin<Options>>({
 });
 
 async function generateProject(options: ExecuteOptions<Options>): Promise<void> {
-    const {name, dryRun, force} = options;
+    const { name, dryRun, force } = options;
     const targetDir = path.resolve(process.cwd(), name);
 
     // Check if target directory exists
@@ -110,11 +109,10 @@ async function generateProject(options: ExecuteOptions<Options>): Promise<void> 
     }
 
     // Copy all files from files directory to target
-    const entries = await fs.readdir(FILES_DIR, {withFileTypes: true});
+    const entries = await fs.readdir(FILES_DIR, { withFileTypes: true });
     await copyEntries(FILES_DIR, targetDir, entries, dryRun);
 
     if (!dryRun) {
-        const x =
         await replacePlaceholders(targetDir, {
             '{PROJECT_NAME}': options.name,
             '{PACKAGE_NAME}': options.packageName,
@@ -155,7 +153,7 @@ async function copyEntries(
                 await fs.ensureDir(targetPath);
             }
             // Recursively copy directory contents
-            const subEntries = await fs.readdir(sourcePath, {withFileTypes: true});
+            const subEntries = await fs.readdir(sourcePath, { withFileTypes: true });
             await copyEntries(sourcePath, targetPath, subEntries, dryRun);
         } else if (entry.isFile()) {
             if (dryRun) {
@@ -169,7 +167,7 @@ async function copyEntries(
 }
 
 async function postProcess(options: ExecuteOptions<Options>): Promise<void> {
-    const {name, dryRun, gitInit, install, packageManager} = options;
+    const { name, dryRun, gitInit, install, packageManager } = options;
     const targetDir = path.resolve(process.cwd(), name);
 
     if (dryRun) {
@@ -180,7 +178,7 @@ async function postProcess(options: ExecuteOptions<Options>): Promise<void> {
     if (gitInit) {
         try {
             console.log('Initializing git repository...');
-            await execAsync('git init', {cwd: targetDir});
+            await execAsync('git init', { cwd: targetDir });
             console.log('Git repository initialized.');
         } catch (error) {
             console.error('Failed to initialize git repository:', (error as Error).message);
@@ -191,7 +189,7 @@ async function postProcess(options: ExecuteOptions<Options>): Promise<void> {
         try {
             console.log('Installing dependencies (this may take a moment)...');
 
-            await execAsync(`${packageManager} install`, {cwd: targetDir});
+            await execAsync(`${packageManager} install`, { cwd: targetDir });
             console.log('Dependencies installed successfully.');
         } catch (error) {
             console.error('Failed to install dependencies:', (error as Error).message);

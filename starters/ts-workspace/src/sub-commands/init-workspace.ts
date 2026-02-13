@@ -1,10 +1,12 @@
+import { exec } from 'child_process';
 import path from 'path';
-import { ExecuteOptions } from '@libria/scaffold-core';
-import { InitOptions } from '../types';
-import fs from 'fs-extra';
 import { fileURLToPath } from 'url';
 import { promisify } from 'util';
-import { exec } from 'child_process';
+
+import { ExecuteOptions } from '@libria/scaffold-core';
+import fs from 'fs-extra';
+
+import { InitOptions } from '../types';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FILES_DIR = path.resolve(__dirname, '..', 'template-files');

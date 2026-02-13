@@ -7,8 +7,8 @@ import {
     SubcommandDefinition,
 } from '@libria/scaffold-core';
 
-import { AddOptions, InitOptions } from './types';
 import { addProject, initWorkspace, templateChoices } from './sub-commands';
+import { AddOptions, InitOptions } from './types';
 
 const subcommands: SubcommandDefinition[] = [
     { name: 'init', description: 'Initialize a new workspace' },
@@ -55,13 +55,16 @@ export default definePlugin<ScaffoldTemplatePlugin>({
                             };
 
                             // Once template is chosen, delegate to that plugin's getOptions
-                            const templateKey = (opts as Record<string, unknown>).template as string | undefined;
+                            const templateKey = (opts as Record<string, unknown>).template as
+                                | string
+                                | undefined;
                             if (templateKey) {
                                 const pluginId = templateChoices.includes(templateKey)
                                     ? `libria:scaffold:${templateKey}`
                                     : undefined;
                                 if (pluginId && ctx.hasPlugin(pluginId)) {
-                                    const templatePlugin = ctx.getPlugin<ScaffoldTemplatePlugin>(pluginId);
+                                    const templatePlugin =
+                                        ctx.getPlugin<ScaffoldTemplatePlugin>(pluginId);
                                     const templateOpts = await templatePlugin.getOptions(opts);
                                     return { ...addBase, ...templateOpts };
                                 }

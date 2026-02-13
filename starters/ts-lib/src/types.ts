@@ -1,4 +1,4 @@
-import {ScaffoldTemplatePluginOption} from "@libria/scaffold-core";
+import { ScaffoldTemplatePluginOption } from '@libria/scaffold-core';
 
 export interface Options {
     packageName: ScaffoldTemplatePluginOption<string>;

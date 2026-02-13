@@ -1,14 +1,13 @@
 import * as readline from 'node:readline';
 
 import { PluginManager } from '@libria/plugin-loader';
-import { Command, InteractiveCommand, Option } from 'interactive-commander';
-
 import {
     ScaffoldTemplatePlugin,
     SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
     ScaffoldTemplatePluginOption,
     ScaffoldTemplatePluginOptions,
 } from '@libria/scaffold-core';
+import { Command, InteractiveCommand, Option } from 'interactive-commander';
 
 // ── Prompting helpers (readline-based, zero dependencies) ────────────────────
 
@@ -197,8 +196,9 @@ async function registerPluginCommand(
 
     // Iteratively resolve options from argv so --help shows the right set.
     const baseOpts: ScaffoldTemplatePluginOptions = { name: '', subcommand };
-    let optionDefs = await plugin.getOptions(baseOpts as ScaffoldTemplatePluginOptions &
-        Partial<Record<string, unknown>>);
+    let optionDefs = await plugin.getOptions(
+        baseOpts as ScaffoldTemplatePluginOptions & Partial<Record<string, unknown>>
+    );
     let preCollected: Record<string, unknown> = { ...baseOpts };
     let previousKeys = new Set<string>();
 
@@ -232,9 +232,7 @@ async function registerPluginCommand(
         await resolveOptions(plugin, collected, cliOpts);
 
         closeRL();
-        await plugin.execute(
-            collected as ScaffoldTemplatePluginOptions & Record<string, unknown>
-        );
+        await plugin.execute(collected as ScaffoldTemplatePluginOptions & Record<string, unknown>);
     });
 }
 
