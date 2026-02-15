@@ -18,8 +18,9 @@
     },
     "type": "module",
     "scripts": {
-        "build": "cross-env NODE_ENV=production tsdown",
+        "build": "npm run typecheck && cross-env NODE_ENV=production tsdown",
         "build:dev": "tsdown",
+        "typecheck": "tsc --noEmit",
         "test": "vitest",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
