@@ -33,7 +33,9 @@
     "clean": "npm run lint:fix && npm run format",
     "generate:angular": "node ./dist/cli/cli.mjs generate angular --output ../angular/src/angular.ts --force",
     "generate:nestjs": "node ./dist/cli/cli.mjs generate nestjs --output ../nestjs/src/nestjs.ts --force",
-    "generate:all": "npm run generate:angular && npm run generate:nestjs"
+    "generate:all": "npm run generate:angular && npm run generate:nestjs",
+    "build-and-generate-all": "npm run build:all && npm run generate:all",
+    "build-and-generate-all:dev": "npm run build:all:dev && npm run generate:all"
   },
   "repository": {
     "type": "git",

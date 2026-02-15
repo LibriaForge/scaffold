@@ -1,6 +1,13 @@
-import {execSync} from 'child_process';
-import {definePlugin, PluginContext} from '@libria/plugin-loader';
-import {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions, SCAFFOLD_TEMPLATE_PLUGIN_TYPE} from '@libria/scaffold-core';
+import { execSync } from 'child_process';
+
+import { definePlugin, PluginContext } from '@libria/plugin-loader';
+import {
+    ScaffoldTemplatePlugin,
+    ScaffoldTemplatePluginOption,
+    ExecuteOptions,
+    SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
+    OptionTypeMap,
+} from '@libria/scaffold-core';
 
 export interface NestJSOptions {
     version: ScaffoldTemplatePluginOption<'string'>;
@@ -18,7 +25,7 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
         return {
             api: {
                 argument: 'nestjs',
-                getOptions: async (options) => {
+                getOptions: async options => {
                     if (!options.version) {
                         return {
                             version: {
@@ -31,8 +38,10 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                         };
                     }
 
-                    const major = Number(options.version);
-                    const allOptions: Record<string, ScaffoldTemplatePluginOption> = {
+                    const allOptions: Record<
+                        string,
+                        ScaffoldTemplatePluginOption<keyof OptionTypeMap>
+                    > = {
                         version: {
                             type: 'string',
                             flags: '--version <version>',
@@ -61,12 +70,14 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                     return allOptions;
                 },
                 execute: async (options: ExecuteOptions<NestJSOptions>) => {
-                    const {name, dryRun} = options;
+                    const { name, dryRun } = options;
                     const major = Number(options.version);
+                    console.log('Executing for version:', major);
                     const args: string[] = [];
 
                     if (options.language) args.push(`--language=${options.language}`);
-                    if (options.packageManager) args.push(`--package-manager=${options.packageManager}`);
+                    if (options.packageManager)
+                        args.push(`--package-manager=${options.packageManager}`);
                     args.push(options.strict ? '--strict' : '--strict=false');
 
                     const cmd = `npx @nestjs/cli@${options.version} new ${name} ${args.join(' ')}`;
@@ -77,7 +88,7 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                     }
 
                     console.log('Running:', cmd);
-                    execSync(cmd, {stdio: 'inherit'});
+                    execSync(cmd, { stdio: 'inherit' });
                 },
             },
         };

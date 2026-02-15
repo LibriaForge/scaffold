@@ -1,6 +1,6 @@
 {
     "name": "@libria/scaffold",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "description": "A pluggable CLI that transforms blank directories into production-ready codebases in seconds",
     "main": "dist/cli/index.cjs",
     "module": "dist/cli/index.mjs",
@@ -71,16 +71,16 @@
     },
     "dependencies": {
         "@libria/plugin-loader": "^2.0.0",
-        "@libria/scaffold-core": "^0.3.1",
+        "@libria/scaffold-core": "^0.3.3",
         "commander": "^14.0.3",
         "fast-glob": "^3.3.3",
         "fs-extra": "^11.3.3",
         "interactive-commander": "^0.6.0"
     },
     "optionalDependencies": {
-        "@libria/scaffold-plugin-angular": "^0.0.1",
-        "@libria/scaffold-plugin-nestjs": "^0.0.1",
-        "@libria/scaffold-plugin-ts-lib": "^0.0.1",
-        "@libria/scaffold-plugin-ts-workspace": "^0.0.1"
+        "@libria/scaffold-plugin-angular": "^0.0.2",
+        "@libria/scaffold-plugin-nestjs": "^0.0.2",
+        "@libria/scaffold-plugin-ts-lib": "^0.0.3",
+        "@libria/scaffold-plugin-ts-workspace": "^0.0.2"
     }
 }

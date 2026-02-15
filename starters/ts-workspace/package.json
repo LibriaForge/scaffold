@@ -1,6 +1,6 @@
 {
     "name": "@libria/scaffold-plugin-ts-workspace",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "NestJs cli wrapper template for @libria/scaffold",
     "main": "dist/index.cjs",
     "module": "dist/index.mjs",
@@ -64,8 +64,8 @@
     },
     "dependencies": {
         "@libria/plugin-loader": "^2.0.0",
-        "@libria/scaffold-core": "^0.3.1",
-        "@libria/scaffold-plugin-ts-lib": "^0.0.1",
+        "@libria/scaffold-core": "^0.3.3",
+        "@libria/scaffold-plugin-ts-lib": "^0.0.3",
         "fs-extra": "^11.3.3"
     }
 }

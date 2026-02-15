@@ -1,13 +1,6 @@
-import { execSync } from 'child_process';
-
-import { definePlugin, PluginContext } from '@libria/plugin-loader';
-import {
-    ScaffoldTemplatePlugin,
-    ScaffoldTemplatePluginOption,
-    ExecuteOptions,
-    SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
-    OptionTypeMap,
-} from '@libria/scaffold-core';
+import {execSync} from 'child_process';
+import {definePlugin, PluginContext} from '@libria/plugin-loader';
+import {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions, SCAFFOLD_TEMPLATE_PLUGIN_TYPE, OptionTypeMap} from '@libria/scaffold-core';
 
 export interface AngularOptions {
     version: ScaffoldTemplatePluginOption<'string'>;
@@ -51,7 +44,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
         return {
             api: {
                 argument: 'angular',
-                getOptions: async options => {
+                getOptions: async (options) => {
                     if (!options.version) {
                         return {
                             version: {
@@ -64,10 +57,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                         };
                     }
 
-                    const allOptions: Record<
-                        string,
-                        ScaffoldTemplatePluginOption<keyof OptionTypeMap>
-                    > = {
+                    const allOptions: Record<string, ScaffoldTemplatePluginOption<keyof OptionTypeMap>> = {
                         version: {
                             type: 'string',
                             flags: '--version <version>',
@@ -112,14 +102,12 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                         aiConfig: {
                             type: 'string',
                             flags: '--ai-config <value...>',
-                            description:
-                                'Specifies which AI tools to generate configuration files for. These file are used to improve the outputs of AI tools by following the best practices.',
+                            description: 'Specifies which AI tools to generate configuration files for. These file are used to improve the outputs of AI tools by following the best practices.',
                         },
                         fileNameStyleGuide: {
                             type: 'string',
                             flags: '--file-name-style-guide <value>',
-                            description:
-                                "The file naming convention to use for generated files. The '2025' style guide (default) uses a concise format (e.g., `app.ts` for the root component), while the '2016' style guide includes the type in the file name (e.g., `app.component.ts`). For more information, see the Angular Style Guide (https://angular.dev/style-guide).",
+                            description: 'The file naming convention to use for generated files. The \'2025\' style guide (default) uses a concise format (e.g., `app.ts` for the root component), while the \'2016\' style guide includes the type in the file name (e.g., `app.component.ts`). For more information, see the Angular Style Guide (https://angular.dev/style-guide).',
                             choices: ['2016', '2025'],
                             defaultValue: '2025',
                         },
@@ -145,8 +133,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                         experimentalZoneless: {
                             type: 'boolean',
                             flags: '--experimental-zoneless',
-                            description:
-                                'Create an initial application that does not utilize `zone.js`.',
+                            description: 'Create an initial application that does not utilize `zone.js`.',
                             defaultValue: false,
                         },
                         inlineStyle: {
@@ -168,8 +155,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                         serverRouting: {
                             type: 'boolean',
                             flags: '--server-routing',
-                            description:
-                                'Create a server application in the initial project using the Server Routing and App Engine APIs (Developer Preview).',
+                            description: 'Create a server application in the initial project using the Server Routing and App Engine APIs (Developer Preview).',
                         },
                         skipGit: {
                             type: 'boolean',
@@ -192,8 +178,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                         zoneless: {
                             type: 'boolean',
                             flags: '--zoneless',
-                            description:
-                                'Create an initial application that does not utilize `zone.js`.',
+                            description: 'Create an initial application that does not utilize `zone.js`.',
                         },
                     };
 
@@ -207,7 +192,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     return allOptions;
                 },
                 execute: async (options: ExecuteOptions<AngularOptions>) => {
-                    const { name, dryRun } = options;
+                    const {name, dryRun} = options;
                     const major = Number(options.version);
                     console.log('Executing for version:', major);
                     const args: string[] = [];
@@ -230,19 +215,13 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     }
                     args.push(`--view-encapsulation=${options.viewEncapsulation}`);
                     if (SUPPORTED_VERSIONS.experimentalZoneless.includes(major)) {
-                        args.push(
-                            options.experimentalZoneless
-                                ? '--experimental-zoneless'
-                                : '--experimental-zoneless=false'
-                        );
+                        args.push(options.experimentalZoneless ? '--experimental-zoneless' : '--experimental-zoneless=false');
                     }
                     if (options.inlineStyle) args.push('--inline-style');
                     if (options.inlineTemplate) args.push('--inline-template');
                     if (options.minimal) args.push('--minimal');
                     if (SUPPORTED_VERSIONS.serverRouting.includes(major)) {
-                        args.push(
-                            options.serverRouting ? '--server-routing' : '--server-routing=false'
-                        );
+                        args.push(options.serverRouting ? '--server-routing' : '--server-routing=false');
                     }
                     if (options.skipGit) args.push('--skip-git');
                     if (options.skipInstall) args.push('--skip-install');
@@ -259,7 +238,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     }
 
                     console.log('Running:', cmd);
-                    execSync(cmd, { stdio: 'inherit' });
+                    execSync(cmd, {stdio: 'inherit'});
                 },
             },
         };
