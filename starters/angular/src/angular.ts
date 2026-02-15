@@ -1,37 +1,30 @@
-import { execSync } from 'child_process';
-
-import { definePlugin, PluginContext } from '@libria/plugin-loader';
-import type {
-    ScaffoldTemplatePlugin,
-    ScaffoldTemplatePluginOption,
-    ExecuteOptions,
-} from '@libria/scaffold-core';
+import {execSync} from 'child_process';
+import {definePlugin, PluginContext} from '@libria/plugin-loader';
+import {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions, SCAFFOLD_TEMPLATE_PLUGIN_TYPE} from '@libria/scaffold-core';
 
 export interface AngularOptions {
-    version: ScaffoldTemplatePluginOption<string>;
-    style: ScaffoldTemplatePluginOption<string>;
-    packageManager: ScaffoldTemplatePluginOption<string>;
-    routing: ScaffoldTemplatePluginOption<boolean>;
-    ssr: ScaffoldTemplatePluginOption<boolean>;
-    standalone: ScaffoldTemplatePluginOption<boolean>;
-    strict: ScaffoldTemplatePluginOption<boolean>;
-    aiConfig: ScaffoldTemplatePluginOption<string>;
-    fileNameStyleGuide: ScaffoldTemplatePluginOption<string>;
-    prefix: ScaffoldTemplatePluginOption<string>;
-    testRunner: ScaffoldTemplatePluginOption<string>;
-    viewEncapsulation: ScaffoldTemplatePluginOption<string>;
-    experimentalZoneless: ScaffoldTemplatePluginOption<boolean>;
-    inlineStyle: ScaffoldTemplatePluginOption<boolean>;
-    inlineTemplate: ScaffoldTemplatePluginOption<boolean>;
-    minimal: ScaffoldTemplatePluginOption<boolean>;
-    serverRouting: ScaffoldTemplatePluginOption<boolean>;
-    skipGit: ScaffoldTemplatePluginOption<boolean>;
-    skipInstall: ScaffoldTemplatePluginOption<boolean>;
-    skipTests: ScaffoldTemplatePluginOption<boolean>;
-    zoneless: ScaffoldTemplatePluginOption<boolean>;
+    version: ScaffoldTemplatePluginOption<'string'>;
+    style: ScaffoldTemplatePluginOption<'string'>;
+    packageManager: ScaffoldTemplatePluginOption<'string'>;
+    routing: ScaffoldTemplatePluginOption<'boolean'>;
+    ssr: ScaffoldTemplatePluginOption<'boolean'>;
+    standalone: ScaffoldTemplatePluginOption<'boolean'>;
+    strict: ScaffoldTemplatePluginOption<'boolean'>;
+    aiConfig: ScaffoldTemplatePluginOption<'string'>;
+    fileNameStyleGuide: ScaffoldTemplatePluginOption<'string'>;
+    prefix: ScaffoldTemplatePluginOption<'string'>;
+    testRunner: ScaffoldTemplatePluginOption<'string'>;
+    viewEncapsulation: ScaffoldTemplatePluginOption<'string'>;
+    experimentalZoneless: ScaffoldTemplatePluginOption<'boolean'>;
+    inlineStyle: ScaffoldTemplatePluginOption<'boolean'>;
+    inlineTemplate: ScaffoldTemplatePluginOption<'boolean'>;
+    minimal: ScaffoldTemplatePluginOption<'boolean'>;
+    serverRouting: ScaffoldTemplatePluginOption<'boolean'>;
+    skipGit: ScaffoldTemplatePluginOption<'boolean'>;
+    skipInstall: ScaffoldTemplatePluginOption<'boolean'>;
+    skipTests: ScaffoldTemplatePluginOption<'boolean'>;
+    zoneless: ScaffoldTemplatePluginOption<'boolean'>;
 }
-
-export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';
 
 const SUPPORTED_VERSIONS: Record<string, number[]> = {
     aiConfig: [21, 20],
@@ -51,10 +44,11 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
         return {
             api: {
                 argument: 'angular',
-                getOptions: async options => {
+                getOptions: async (options) => {
                     if (!options.version) {
                         return {
                             version: {
+                                type: 'string',
                                 flags: '--version <version>',
                                 description: 'Angular version:',
                                 choices: ['21', '20', '19', '18'],
@@ -66,110 +60,126 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     const major = Number(options.version);
                     const allOptions: Record<string, ScaffoldTemplatePluginOption> = {
                         version: {
+                            type: 'string',
                             flags: '--version <version>',
                             description: 'Angular version:',
                             choices: ['21', '20', '19', '18'],
                             defaultValue: '21',
                         },
                         style: {
+                            type: 'string',
                             flags: '--style <value>',
                             description: 'Which stylesheet format would you like to use?',
                             choices: ['css', 'scss', 'sass', 'less', 'tailwind'],
                         },
                         packageManager: {
+                            type: 'string',
                             flags: '--package-manager <value>',
                             description: 'Which package manager would you like to use?',
                             choices: ['npm', 'yarn', 'pnpm', 'bun', 'cnpm'],
                         },
                         routing: {
+                            type: 'boolean',
                             flags: '--routing',
                             description: 'Add routing?',
                         },
                         ssr: {
+                            type: 'boolean',
                             flags: '--ssr',
                             description: 'Enable Server-Side Rendering (SSR)?',
                         },
                         standalone: {
+                            type: 'boolean',
                             flags: '--standalone',
                             description: 'Use standalone components?',
                             defaultValue: true,
                         },
                         strict: {
+                            type: 'boolean',
                             flags: '--strict',
                             description: 'Enable strict mode?',
                             defaultValue: true,
                         },
                         aiConfig: {
+                            type: 'array',
                             flags: '--ai-config <value>',
-                            description:
-                                'Specifies which AI tools to generate configuration files for. These file are used to improve the outputs of AI tools by following the best practices.',
+                            description: 'Specifies which AI tools to generate configuration files for. These file are used to improve the outputs of AI tools by following the best practices.',
                         },
                         fileNameStyleGuide: {
+                            type: 'string',
                             flags: '--file-name-style-guide <value>',
-                            description:
-                                "The file naming convention to use for generated files. The '2025' style guide (default) uses a concise format (e.g., `app.ts` for the root component), while the '2016' style guide includes the type in the file name (e.g., `app.component.ts`). For more information, see the Angular Style Guide (https://angular.dev/style-guide).",
+                            description: 'The file naming convention to use for generated files. The \'2025\' style guide (default) uses a concise format (e.g., `app.ts` for the root component), while the \'2016\' style guide includes the type in the file name (e.g., `app.component.ts`). For more information, see the Angular Style Guide (https://angular.dev/style-guide).',
                             choices: ['2016', '2025'],
                             defaultValue: '2025',
                         },
                         prefix: {
+                            type: 'string',
                             flags: '--prefix <value>',
                             description: 'Component selector prefix:',
                             defaultValue: 'app',
                         },
                         testRunner: {
+                            type: 'string',
                             flags: '--test-runner <value>',
                             description: 'The unit testing runner to use.',
                             choices: ['vitest', 'karma'],
                             defaultValue: 'vitest',
                         },
                         viewEncapsulation: {
+                            type: 'string',
                             flags: '--view-encapsulation <value>',
                             description: 'Which view encapsulation strategy?',
                             choices: ['Emulated', 'None', 'ShadowDom'],
                         },
                         experimentalZoneless: {
+                            type: 'boolean',
                             flags: '--experimental-zoneless',
-                            description:
-                                'Create an initial application that does not utilize `zone.js`.',
+                            description: 'Create an initial application that does not utilize `zone.js`.',
                             defaultValue: false,
                         },
                         inlineStyle: {
+                            type: 'boolean',
                             flags: '--inline-style',
                             description: 'Use inline styles?',
                         },
                         inlineTemplate: {
+                            type: 'boolean',
                             flags: '--inline-template',
                             description: 'Use inline templates?',
                         },
                         minimal: {
+                            type: 'boolean',
                             flags: '--minimal',
                             description: 'Create a minimal project?',
                             defaultValue: false,
                         },
                         serverRouting: {
+                            type: 'boolean',
                             flags: '--server-routing',
-                            description:
-                                'Create a server application in the initial project using the Server Routing and App Engine APIs (Developer Preview).',
+                            description: 'Create a server application in the initial project using the Server Routing and App Engine APIs (Developer Preview).',
                         },
                         skipGit: {
+                            type: 'boolean',
                             flags: '--skip-git',
                             description: 'Skip git initialization?',
                             defaultValue: false,
                         },
                         skipInstall: {
+                            type: 'boolean',
                             flags: '--skip-install',
                             description: 'Skip installing dependencies?',
                             defaultValue: false,
                         },
                         skipTests: {
+                            type: 'boolean',
                             flags: '--skip-tests',
                             description: 'Skip generating test files?',
                             defaultValue: false,
                         },
                         zoneless: {
+                            type: 'boolean',
                             flags: '--zoneless',
-                            description:
-                                'Create an initial application that does not utilize `zone.js`.',
+                            description: 'Create an initial application that does not utilize `zone.js`.',
                         },
                     };
 
@@ -182,7 +192,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     return allOptions;
                 },
                 execute: async (options: ExecuteOptions<AngularOptions>) => {
-                    const { name, dryRun } = options;
+                    const {name, dryRun} = options;
                     const major = Number(options.version);
                     const args: string[] = [];
 
@@ -204,19 +214,13 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     }
                     args.push(`--view-encapsulation=${options.viewEncapsulation}`);
                     if (SUPPORTED_VERSIONS.experimentalZoneless.includes(major)) {
-                        args.push(
-                            options.experimentalZoneless
-                                ? '--experimental-zoneless'
-                                : '--experimental-zoneless=false'
-                        );
+                        args.push(options.experimentalZoneless ? '--experimental-zoneless' : '--experimental-zoneless=false');
                     }
                     if (options.inlineStyle) args.push('--inline-style');
                     if (options.inlineTemplate) args.push('--inline-template');
                     if (options.minimal) args.push('--minimal');
                     if (SUPPORTED_VERSIONS.serverRouting.includes(major)) {
-                        args.push(
-                            options.serverRouting ? '--server-routing' : '--server-routing=false'
-                        );
+                        args.push(options.serverRouting ? '--server-routing' : '--server-routing=false');
                     }
                     if (options.skipGit) args.push('--skip-git');
                     if (options.skipInstall) args.push('--skip-install');
@@ -233,7 +237,7 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     }
 
                     console.log('Running:', cmd);
-                    execSync(cmd, { stdio: 'inherit' });
+                    execSync(cmd, {stdio: 'inherit'});
                 },
             },
         };

@@ -31,45 +31,49 @@ export default definePlugin<ScaffoldTemplatePlugin<Options>>({
                 getOptions: async (initOptions): Promise<Options> => {
                     return {
                         packageName: {
-                            flags: '--package-name',
+                            type: 'string',
+                            flags: '--package-name <value>',
                             description: 'Package name:',
                             defaultValue: initOptions.name,
                         },
                         description: {
-                            flags: '--description',
+                            type: 'string',
+                            flags: '--description <value>',
                             description: 'Description:',
                         },
                         version: {
-                            flags: '--version',
+                            type: 'string',
+                            flags: '--version <value>',
                             description: 'Version:',
                             defaultValue: '0.0.0',
                             required: true,
                         },
                         author: {
-                            flags: '--author',
+                            type: 'string',
+                            flags: '--author <value>',
                             description: 'Author:',
                         },
                         githubRepo: {
-                            flags: '--github-repo',
+                            type: 'string',
+                            flags: '--github-repo <value>',
                             description: 'GitHub repository (owner/repo):',
                         },
                         gitInit: {
+                            type: 'boolean',
                             flags: '--git-init',
                             description: 'Initialize git repository?',
-                            defaultValue: true,
-                            required: false,
                         },
                         packageManager: {
-                            flags: '--package-manager',
-                            description: 'Package Manager (npm/yarn/pnpm):',
+                            type: 'string',
+                            flags: '--package-manager <value>',
+                            description: 'Package Manager:',
                             choices: ['npm', 'yarn', 'pnpm'],
                             defaultValue: 'npm',
                         },
                         install: {
+                            type: 'boolean',
                             flags: '--install',
                             description: 'Install dependencies?',
-                            defaultValue: true,
-                            required: false,
                         },
                     };
                 },

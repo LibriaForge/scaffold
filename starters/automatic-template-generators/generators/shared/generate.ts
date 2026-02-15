@@ -4,6 +4,7 @@ import {escapeQuotes, toKebabCase} from './utils';
 function generateVersionOption(I: (d: number) => string, config: GenerateFileConfig, sortedMajors: number[], depth: number): string[] {
     const lines: string[] = [];
     lines.push(`${I(depth)}version: {`);
+    lines.push(`${I(depth + 1)}type: 'string',`);
     lines.push(`${I(depth + 1)}flags: '--version <version>',`);
     lines.push(`${I(depth + 1)}description: '${config.versionDescription}',`);
     lines.push(`${I(depth + 1)}choices: [${sortedMajors.map((m) => `'${m}'`).join(', ')}],`);
@@ -16,7 +17,7 @@ function generateOptionDef(I: (d: number) => string, prop: MergedProperty, depth
     const lines: string[] = [];
     const flag = toKebabCase(prop.name);
     lines.push(`${I(depth)}${prop.name}: {`);
-
+    lines.push(`${I(depth + 1)}type: '${prop.type}',`)
     if (prop.type === 'boolean') {
         lines.push(`${I(depth + 1)}flags: '--${flag}',`);
     } else {
@@ -53,21 +54,17 @@ export function generateFile(
     // ── Imports
     lines.push(`import {execSync} from 'child_process';`);
     lines.push(`import {definePlugin, PluginContext} from '@libria/plugin-loader';`);
-    lines.push(`import type {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions} from '@libria/scaffold-core';`);
+    lines.push(`import {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions, SCAFFOLD_TEMPLATE_PLUGIN_TYPE} from '@libria/scaffold-core';`);
     lines.push(``);
 
     // ── Options interface (union of all options across all versions)
     lines.push(`export interface ${config.interfaceName} {`);
-    lines.push(`${I(1)}version: ScaffoldTemplatePluginOption<string>;`);
+    lines.push(`${I(1)}version: ScaffoldTemplatePluginOption<'string'>;`);
     for (const prop of mergedProps) {
         const valueType = prop.type === 'boolean' ? 'boolean' : 'string';
-        lines.push(`${I(1)}${prop.name}: ScaffoldTemplatePluginOption<${valueType}>;`);
+        lines.push(`${I(1)}${prop.name}: ScaffoldTemplatePluginOption<'${valueType}'>;`);
     }
     lines.push(`}`);
-    lines.push(``);
-
-    // ── Plugin type constant
-    lines.push(`export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';`);
     lines.push(``);
 
     // ── Supported versions per option (used in execute to skip irrelevant flags)
