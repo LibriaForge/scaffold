@@ -5,6 +5,8 @@ export type SchemaProperty = {
     description?: string;
     default?: unknown;
     enum?: string[];
+    /** For type "array", allowed values per element (e.g. Angular items.enum). */
+    items?: { type?: string; enum?: string[] };
     visible?: boolean;
     'x-deprecated'?: string;
     'x-user-analytics'?: unknown;

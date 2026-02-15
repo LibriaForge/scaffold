@@ -25,8 +25,10 @@ function generateOptionDef(
 ): string[] {
     const lines: string[] = [];
     const flag = toKebabCase(prop.name);
+    const valueType =
+        prop.type === 'boolean' ? 'boolean' : prop.type === 'array' ? 'array' : 'string';
     lines.push(`${I(depth)}${prop.name}: {`);
-    lines.push(`${I(depth + 1)}type: '${prop.type === 'boolean' ? 'boolean' : 'string'}',`);
+    lines.push(`${I(depth + 1)}type: '${valueType}',`);
     if (prop.type === 'boolean') {
         lines.push(`${I(depth + 1)}flags: '--${flag}',`);
     } else {
@@ -73,7 +75,8 @@ export function generateFile(
     lines.push(`export interface ${config.interfaceName} {`);
     lines.push(`${I(1)}version: ScaffoldTemplatePluginOption<'string'>;`);
     for (const prop of mergedProps) {
-        const valueType = prop.type === 'boolean' ? 'boolean' : 'string';
+        const valueType =
+            prop.type === 'boolean' ? 'boolean' : prop.type === 'array' ? 'array' : 'string';
         lines.push(`${I(1)}${prop.name}: ScaffoldTemplatePluginOption<'${valueType}'>;`);
     }
     lines.push(`}`);
@@ -166,7 +169,11 @@ export function generateFile(
 
         const indent = allMajorsSupported ? I(5) : I(6);
 
-        if (prop.enumValues) {
+        if (prop.type === 'array') {
+            lines.push(`${indent}if (Array.isArray(${optAccess})) {`);
+            lines.push(`${indent}  for (const v of ${optAccess}) args.push(\`--${flag}=\${v}\`);`);
+            lines.push(`${indent}} else if (${optAccess}) { args.push(\`--${flag}=\${${optAccess}}\`); }`);
+        } else if (prop.enumValues) {
             lines.push(`${indent}args.push(\`--${flag}=\${${optAccess}}\`);`);
         } else if (prop.type === 'boolean') {
             if (config.defaultFalseBooleans.has(prop.name)) {

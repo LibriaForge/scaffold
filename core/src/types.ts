@@ -4,6 +4,7 @@ export type OptionTypeMap = {
     string: string;
     boolean: boolean;
     number: number;
+    array: string[];
 };
 
 export type ScaffoldTemplatePluginOption<TType extends keyof OptionTypeMap> = {

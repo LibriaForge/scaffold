@@ -17,7 +17,7 @@ export interface AngularOptions {
     ssr: ScaffoldTemplatePluginOption<'boolean'>;
     standalone: ScaffoldTemplatePluginOption<'boolean'>;
     strict: ScaffoldTemplatePluginOption<'boolean'>;
-    aiConfig: ScaffoldTemplatePluginOption<'string'>;
+    aiConfig: ScaffoldTemplatePluginOption<'array'>;
     fileNameStyleGuide: ScaffoldTemplatePluginOption<'string'>;
     prefix: ScaffoldTemplatePluginOption<'string'>;
     testRunner: ScaffoldTemplatePluginOption<'string'>;
@@ -110,10 +110,20 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                             defaultValue: true,
                         },
                         aiConfig: {
-                            type: 'string',
+                            type: 'array',
                             flags: '--ai-config <value...>',
                             description:
                                 'Specifies which AI tools to generate configuration files for. These file are used to improve the outputs of AI tools by following the best practices.',
+                            choices: [
+                                'none',
+                                'gemini',
+                                'copilot',
+                                'claude',
+                                'cursor',
+                                'jetbrains',
+                                'windsurf',
+                                'agents',
+                            ],
                         },
                         fileNameStyleGuide: {
                             type: 'string',
@@ -219,7 +229,11 @@ export default definePlugin<ScaffoldTemplatePlugin<AngularOptions>>({
                     args.push(options.standalone ? '--standalone' : '--standalone=false');
                     args.push(options.strict ? '--strict' : '--strict=false');
                     if (SUPPORTED_VERSIONS.aiConfig.includes(major)) {
-                        if (options.aiConfig) args.push(`--ai-config=${options.aiConfig}`);
+                        if (Array.isArray(options.aiConfig)) {
+                            for (const v of options.aiConfig) args.push(`--ai-config=${v}`);
+                        } else if (options.aiConfig) {
+                            args.push(`--ai-config=${options.aiConfig}`);
+                        }
                     }
                     if (SUPPORTED_VERSIONS.fileNameStyleGuide.includes(major)) {
                         args.push(`--file-name-style-guide=${options.fileNameStyleGuide}`);

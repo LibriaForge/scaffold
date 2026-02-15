@@ -72,6 +72,21 @@ async function promptForOption(
     key: string,
     def: ScaffoldTemplatePluginOption<keyof OptionTypeMap>
 ): Promise<unknown> {
+    const optType = def.type as string;
+    if (optType === 'array') {
+        const choices = (def.choices ?? []) as string[];
+        const hint = choices.length ? ` (comma-separated, choices: ${choices.join(', ')})` : ' (comma-separated)';
+        const defaultStr = Array.isArray(def.defaultValue)
+            ? def.defaultValue.join(', ')
+            : def.defaultValue !== undefined
+              ? String(def.defaultValue)
+              : '';
+        const answer = await ask(`  ${def.description}${hint} [${defaultStr}]: `);
+        const raw = answer.trim() || defaultStr;
+        if (!raw) return choices.length ? [] : [];
+        const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+        return choices.length ? parts.filter(p => choices.includes(p)) : parts;
+    }
     if (def.choices?.length) {
         return promptSelect(def.description, def.choices, def.defaultValue);
     }
@@ -122,7 +137,18 @@ async function resolveOptions(
 }
 
 // ── Argv pre-parsing ─────────────────────────────────────────────────────────
-function castValue(type: 'string' | 'boolean' | 'number', value: string) {
+function castValue(
+    type: 'string' | 'boolean' | 'number' | 'array',
+    value: string,
+    choices?: string[]
+): string | number | boolean | string[] {
+    if (type === 'array') {
+        const parts = value.split(',').map(s => s.trim()).filter(Boolean);
+        if (choices?.length) {
+            return parts.filter(p => choices.includes(p));
+        }
+        return parts;
+    }
     if (type === 'number') return Number(value);
     if (type === 'boolean') return value === 'true';
     return value;
@@ -176,22 +202,39 @@ function preParseArgv(
             }
 
             // -----------------------
-            // --flag=value
+            // --flag=value (or --flag=v1,v2 for array)
             // -----------------------
             if (arg.startsWith(`${positive}=`)) {
-                const value = arg.split('=')[1];
-                result[key] = castValue(def.type, value);
+                const value = arg.split('=').slice(1).join('=').trim();
+                if ((def.type as string) === 'array') {
+                    result[key] = castValue('array', value, def.choices as string[] | undefined);
+                } else {
+                    result[key] = castValue(def.type as 'string' | 'boolean' | 'number', value);
+                }
                 matched = true;
                 break;
             }
 
             // -----------------------
-            // --flag value
+            // --flag value [value ...] (variadic for array)
             // -----------------------
             if (arg === positive && def.type !== 'boolean') {
-                const value = args[i + 1];
-                result[key] = castValue(def.type, value);
-                i++; // skip next arg
+                if ((def.type as string) === 'array') {
+                    const collected: string[] = [];
+                    for (let j = i + 1; j < args.length; j++) {
+                        const next = args[j];
+                        if (next.startsWith('--')) break;
+                        if (def.choices?.length && !(def.choices as string[]).includes(next)) break;
+                        collected.push(next);
+                    }
+                    result[key] = def.choices?.length
+                        ? collected.filter(c => (def.choices as string[]).includes(c))
+                        : collected;
+                    i += collected.length;
+                } else {
+                    result[key] = castValue(def.type as 'string' | 'number', args[i + 1]);
+                    i++;
+                }
                 matched = true;
                 break;
             }
@@ -214,7 +257,12 @@ function registerOption(
     const cmdOption = new InteractiveOption(def.flags, def.description);
 
     if (def.defaultValue !== undefined) {
-        cmdOption.default(def.defaultValue);
+        // Commander variadic options expect array default; scalar default for non-array
+        if ((def.type as string) === 'array' && !Array.isArray(def.defaultValue)) {
+            cmdOption.default([]);
+        } else {
+            cmdOption.default(def.defaultValue);
+        }
     }
     if (def.choices?.length) {
         cmdOption.choices(def.choices.map(String));
