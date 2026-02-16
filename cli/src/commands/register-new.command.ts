@@ -75,7 +75,9 @@ async function promptForOption(
     const optType = def.type as string;
     if (optType === 'array') {
         const choices = (def.choices ?? []) as string[];
-        const hint = choices.length ? ` (comma-separated, choices: ${choices.join(', ')})` : ' (comma-separated)';
+        const hint = choices.length
+            ? ` (comma-separated, choices: ${choices.join(', ')})`
+            : ' (comma-separated)';
         const defaultStr = Array.isArray(def.defaultValue)
             ? def.defaultValue.join(', ')
             : def.defaultValue !== undefined
@@ -84,7 +86,10 @@ async function promptForOption(
         const answer = await ask(`  ${def.description}${hint} [${defaultStr}]: `);
         const raw = answer.trim() || defaultStr;
         if (!raw) return choices.length ? [] : [];
-        const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+        const parts = raw
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
         return choices.length ? parts.filter(p => choices.includes(p)) : parts;
     }
     if (def.choices?.length) {
@@ -143,7 +148,10 @@ function castValue(
     choices?: string[]
 ): string | number | boolean | string[] {
     if (type === 'array') {
-        const parts = value.split(',').map(s => s.trim()).filter(Boolean);
+        const parts = value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
         if (choices?.length) {
             return parts.filter(p => choices.includes(p));
         }
@@ -272,6 +280,21 @@ function registerOption(
     }
 
     cmd.addOption(cmdOption);
+
+
+    // Register --no-* negation option for boolean flags
+    if (def.type === 'boolean' && isBooleanFlag(def)) {
+        const flagMatch = def.flags.match(/--([a-z][a-z-]*)/i);
+        if (flagMatch) {
+            const negationName = flagMatch[1];
+            const negationDescription = `Disable ${def.description.toLowerCase()}`;
+            const negationOption = new InteractiveOption(`--no-${negationName}`, negationDescription);
+            if (def.defaultValue === true) {
+                negationOption.default(false);
+            }
+            cmd.addOption(negationOption);
+        }
+    }
 }
 
 // ── Plugin command registration helper ────────────────────────────────────────
@@ -290,10 +313,10 @@ async function registerPluginCommand(
         .command(commandName)
         .description(description)
         .argument('<name>', 'Project name')
+        .option('--no-dry-run', 'Write files')
         .option('--dry-run', 'Simulate without writing files')
-        .option('--no-dry-run')
+        .option('--no-force', 'Do not overwrite existing files')
         .option('--force', 'Overwrite existing files')
-        .option('--no-force')
         .allowUnknownOption(true);
 
     // Iteratively resolve options from argv so --help shows the right set.

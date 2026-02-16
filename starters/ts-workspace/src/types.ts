@@ -8,4 +8,5 @@ export interface InitOptions {
 export interface AddOptions {
     workspace: ScaffoldTemplatePluginOption<'string'>;
     template: ScaffoldTemplatePluginOption<'string'>;
+    basePath: ScaffoldTemplatePluginOption<'string'>;
 }

@@ -26,7 +26,9 @@ export type ResolvedOptions<TOpt extends object> = {
 };
 
 export type ExecuteOptions<TOpt extends object> = ScaffoldTemplatePluginOptions & {
-    [k in keyof TOpt]: TOpt[k] extends ScaffoldTemplatePluginOption<infer TValue> ? TValue : never;
+    [k in keyof TOpt]: TOpt[k] extends ScaffoldTemplatePluginOption<infer TValue>
+        ? OptionTypeMap[TValue]
+        : never;
 };
 
 export type ScaffoldTemplatePluginOptions = {

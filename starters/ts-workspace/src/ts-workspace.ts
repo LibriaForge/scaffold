@@ -45,6 +45,12 @@ export default definePlugin<ScaffoldTemplatePlugin>({
                             } satisfies InitOptions;
                         case 'add': {
                             const addBase: AddOptions = {
+                                basePath: {
+                                    type: 'string',
+                                    flags: '--base-path <path>',
+                                    description: 'Base path for the project:',
+                                    defaultValue: 'packages',
+                                },
                                 workspace: {
                                     type: 'string',
                                     flags: '--workspace <workspace>',

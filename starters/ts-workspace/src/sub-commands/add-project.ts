@@ -6,10 +6,23 @@ import fs from 'fs-extra';
 
 import { AddOptions } from '../types';
 
-function parseJsonc(text: string): unknown {
+/** Minimal tsconfig shape for reading/patching. */
+interface TsConfigJson {
+    extends?: string;
+    compilerOptions?: Record<string, unknown>;
+    references?: Array<{ path: string }>;
+}
+
+/** Minimal package.json shape with workspaces. */
+interface PackageJsonWithWorkspaces {
+    workspaces: string[];
+    [key: string]: unknown;
+}
+
+function parseJsonc<T = unknown>(text: string): T {
     // Strip block comments (/* ... */) and line comments (// ...)
     const stripped = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-    return JSON.parse(stripped);
+    return JSON.parse(stripped) as T;
 }
 
 const TEMPLATES: Record<string, string> = {
@@ -45,22 +58,23 @@ export async function addProject(
         process.exit(1);
     }
 
-    const packagesDir = path.join(workspaceDir, 'packages');
+    const packagesDir = path.join(workspaceDir, opts.basePath || '');
     await fs.ensureDir(packagesDir);
     const packageDir = path.join(packagesDir, opts.name);
 
-    const templatePlugin = ctx.getPlugin<ScaffoldTemplatePlugin<any>>(pluginId);
+    const templatePlugin = ctx.getPlugin<ScaffoldTemplatePlugin<object>>(pluginId);
 
     // chdir into packages/ so template plugins create the project with a clean name
     const originalCwd = process.cwd();
     process.chdir(packagesDir);
     try {
-        await templatePlugin.execute({
+        const executeOpts = {
             ...opts,
             name: opts.name,
             gitInit: false,
             install: false,
-        });
+        };
+        await templatePlugin.execute(executeOpts as ExecuteOptions<object>);
     } finally {
         process.chdir(originalCwd);
     }
@@ -84,10 +98,10 @@ async function postAdd(workspaceDir: string, packageDir: string, dryRun?: boolea
 
     if ((await fs.pathExists(pkgTsconfigPath)) && (await fs.pathExists(baseTsconfigPath))) {
         const extendsPath = path.relative(packageDir, baseTsconfigPath).replace(/\\/g, '/');
-        const baseTsconfig = parseJsonc(await fs.readFile(baseTsconfigPath, 'utf-8'));
+        const baseTsconfig = parseJsonc<TsConfigJson>(await fs.readFile(baseTsconfigPath, 'utf-8'));
         const baseKeys = new Set(Object.keys(baseTsconfig.compilerOptions ?? {}));
 
-        const pkgTsconfig = parseJsonc(await fs.readFile(pkgTsconfigPath, 'utf-8'));
+        const pkgTsconfig = parseJsonc<TsConfigJson>(await fs.readFile(pkgTsconfigPath, 'utf-8'));
 
         // Set extends
         pkgTsconfig.extends = extendsPath;
@@ -114,7 +128,7 @@ async function postAdd(workspaceDir: string, packageDir: string, dryRun?: boolea
     // 2. Add project reference to workspace tsconfig.json
     const wsTsconfigPath = path.join(workspaceDir, 'tsconfig.json');
     if (await fs.pathExists(wsTsconfigPath)) {
-        const wsTsconfig = parseJsonc(await fs.readFile(wsTsconfigPath, 'utf-8'));
+        const wsTsconfig = parseJsonc<TsConfigJson>(await fs.readFile(wsTsconfigPath, 'utf-8'));
         const refPath = packageRelative.replace(/\\/g, '/');
 
         if (!wsTsconfig.references) wsTsconfig.references = [];
@@ -135,11 +149,13 @@ async function postAdd(workspaceDir: string, packageDir: string, dryRun?: boolea
 
     // 3. Add to workspace package.json workspaces array
     const wsPkgPath = path.join(workspaceDir, 'package.json');
-    const wsPkg = await fs.readJson(wsPkgPath);
+    const wsPkg = (await fs.readJson(wsPkgPath)) as PackageJsonWithWorkspaces;
     const wsEntry = packageRelative.replace(/\\/g, '/');
 
-    if (!wsPkg.workspaces.includes(wsEntry)) {
-        wsPkg.workspaces.push(wsEntry);
+    const workspaces = Array.isArray(wsPkg.workspaces) ? wsPkg.workspaces : [];
+    if (!workspaces.includes(wsEntry)) {
+        workspaces.push(wsEntry);
+        wsPkg.workspaces = workspaces;
 
         if (dryRun) {
             console.log(`[dry-run] Would add "${wsEntry}" to workspaces in ${wsPkgPath}`);

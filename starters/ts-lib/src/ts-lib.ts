@@ -73,8 +73,8 @@ export default definePlugin<ScaffoldTemplatePlugin<Options>>({
                         install: {
                             type: 'boolean',
                             flags: '--install',
-                            description: 'Install dependencies?',
-                        },
+                            description: 'Install dependencies?'
+                        }
                     };
                 },
                 execute: async options => {
