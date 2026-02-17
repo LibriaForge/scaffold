@@ -14,6 +14,8 @@ export interface NestJSOptions {
     language: ScaffoldTemplatePluginOption<'string'>;
     packageManager: ScaffoldTemplatePluginOption<'string'>;
     strict: ScaffoldTemplatePluginOption<'boolean'>;
+    skipInstall: ScaffoldTemplatePluginOption<'boolean'>;
+    skipGit: ScaffoldTemplatePluginOption<'boolean'>;
 }
 
 export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
@@ -65,6 +67,18 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                             description: 'Enable TypeScript strict mode?',
                             defaultValue: false,
                         },
+                        skipInstall: {
+                            type: 'boolean',
+                            flags: '--skip-install',
+                            description: 'Skip installing dependencies?',
+                            defaultValue: false,
+                        },
+                        skipGit: {
+                            type: 'boolean',
+                            flags: '--skip-git',
+                            description: 'Skip git initialization?',
+                            defaultValue: false,
+                        },
                     };
 
                     return allOptions;
@@ -79,6 +93,8 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                     if (options.packageManager)
                         args.push(`--package-manager=${options.packageManager}`);
                     args.push(options.strict ? '--strict' : '--strict=false');
+                    if (options.skipInstall) args.push('--skip-install');
+                    if (options.skipGit) args.push('--skip-git');
 
                     const cmd = `npx @nestjs/cli@${options.version} new ${name} ${args.join(' ')}`;
 

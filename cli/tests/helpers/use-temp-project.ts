@@ -22,7 +22,7 @@ export async function useTempProject(name?: string): Promise<TempProjectResult> 
         cleanup: async () => {
             process.chdir(originalCwd);
             if (await fs.pathExists(tmp)) {
-                await fs.remove(tmp);
+                // await fs.remove(tmp);
             }
         },
     };

@@ -63,9 +63,10 @@
         "vitest": "^2.0.0"
     },
     "dependencies": {
-        "@libria/plugin-loader": "^2.0.0",
+        "@libria/plugin-loader": "^2.1.0",
         "@libria/scaffold-core": "^0.3.4",
         "@libria/scaffold-plugin-ts-lib": "^0.0.4",
-        "fs-extra": "^11.3.3"
+        "fs-extra": "^11.3.3",
+        "typescript": "^5.0.0"
     }
 }

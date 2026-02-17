@@ -41,7 +41,7 @@ export default definePlugin<ScaffoldTemplatePlugin<NextJSOptions>>({
                             type: 'string',
                             flags: '--version <version>',
                             description: 'NextJS version:',
-                            defaultValue: '@latest',
+                            defaultValue: 'latest',
                         },
                         language: {
                             type: 'string',
@@ -128,7 +128,7 @@ export default definePlugin<ScaffoldTemplatePlugin<NextJSOptions>>({
                     };
                 },
                 execute: async (options: ExecuteOptions<NextJSOptions>) => {
-                    const { name, dryRun, version } = options;
+                    const { name, dryRun } = options;
                     const args: string[] = [];
 
                     // Language: --ts (default) or --js
@@ -146,6 +146,8 @@ export default definePlugin<ScaffoldTemplatePlugin<NextJSOptions>>({
                     // React Compiler: --react-compiler
                     if (options.reactCompiler) {
                         args.push('--react-compiler');
+                    } else {
+                        args.push('--no-react-compiler');
                     }
 
                     // Linter: --eslint, --biome, or --no-linter
@@ -190,7 +192,7 @@ export default definePlugin<ScaffoldTemplatePlugin<NextJSOptions>>({
                     }
 
                     // Import alias: --import-alias <alias>
-                    if (options.importAlias && options.importAlias !== '@/*') {
+                    if (options.importAlias) {
                         args.push(`--import-alias=${options.importAlias}`);
                     }
 

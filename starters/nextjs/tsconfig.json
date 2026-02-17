@@ -4,12 +4,13 @@
     "rootDir": "./src"
   },
   "include": [
-    "src*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "tests"
   ],
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
+  "references": [{ "path": "../../core" }]
 }

@@ -4,6 +4,8 @@ import { PluginContext } from '@libria/plugin-loader';
 import { ExecuteOptions, ScaffoldTemplatePlugin } from '@libria/scaffold-core';
 import fs from 'fs-extra';
 
+import ts from 'typescript';
+
 import { AddOptions } from '../types';
 
 /** Minimal tsconfig shape for reading/patching. */
@@ -19,16 +21,20 @@ interface PackageJsonWithWorkspaces {
     [key: string]: unknown;
 }
 
-function parseJsonc<T = unknown>(text: string): T {
-    // Strip block comments (/* ... */) and line comments (// ...)
-    const stripped = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-    return JSON.parse(stripped) as T;
+function parseTsconfig<T = unknown>(fileName: string, text: string): T {
+    const { config, error } = ts.parseConfigFileTextToJson(fileName, text);
+    if (error) {
+        const msg = ts.flattenDiagnosticMessageText(error.messageText, '\n');
+        throw new Error(`Failed to parse ${fileName}: ${msg}`);
+    }
+    return config as T;
 }
 
 const TEMPLATES: Record<string, string> = {
     'ts-lib': 'libria:scaffold:ts-lib',
     angular: 'libria:scaffold:angular',
     nestjs: 'libria:scaffold:nestjs',
+    nextjs: 'libria:scaffold:nextjs',
 };
 
 export const templateChoices = Object.keys(TEMPLATES);
@@ -98,10 +104,10 @@ async function postAdd(workspaceDir: string, packageDir: string, dryRun?: boolea
 
     if ((await fs.pathExists(pkgTsconfigPath)) && (await fs.pathExists(baseTsconfigPath))) {
         const extendsPath = path.relative(packageDir, baseTsconfigPath).replace(/\\/g, '/');
-        const baseTsconfig = parseJsonc<TsConfigJson>(await fs.readFile(baseTsconfigPath, 'utf-8'));
+        const baseTsconfig = parseTsconfig<TsConfigJson>(baseTsconfigPath, await fs.readFile(baseTsconfigPath, 'utf-8'));
         const baseKeys = new Set(Object.keys(baseTsconfig.compilerOptions ?? {}));
 
-        const pkgTsconfig = parseJsonc<TsConfigJson>(await fs.readFile(pkgTsconfigPath, 'utf-8'));
+        const pkgTsconfig = parseTsconfig<TsConfigJson>(pkgTsconfigPath, await fs.readFile(pkgTsconfigPath, 'utf-8'));
 
         // Set extends
         pkgTsconfig.extends = extendsPath;
@@ -128,7 +134,7 @@ async function postAdd(workspaceDir: string, packageDir: string, dryRun?: boolea
     // 2. Add project reference to workspace tsconfig.json
     const wsTsconfigPath = path.join(workspaceDir, 'tsconfig.json');
     if (await fs.pathExists(wsTsconfigPath)) {
-        const wsTsconfig = parseJsonc<TsConfigJson>(await fs.readFile(wsTsconfigPath, 'utf-8'));
+        const wsTsconfig = parseTsconfig<TsConfigJson>(wsTsconfigPath, await fs.readFile(wsTsconfigPath, 'utf-8'));
         const refPath = packageRelative.replace(/\\/g, '/');
 
         if (!wsTsconfig.references) wsTsconfig.references = [];

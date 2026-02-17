@@ -1,5 +1,4 @@
 import path from 'path';
-
 import fs from 'fs-extra';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PluginManager } from '@libria/plugin-loader';
@@ -11,9 +10,12 @@ import { AddOptions, InitOptions } from '@libria/scaffold-plugin-ts-workspace';
 const STARTERS_DIR = path.resolve(import.meta.dirname, '../../starters');
 import { Options as TsLibOptions } from '@libria/scaffold-plugin-ts-lib';
 import { NestJSOptions } from '@libria/scaffold-plugin-nestjs';
+import { NextJSOptions } from '@libria/scaffold-plugin-nextjs';
+import ts from 'typescript';
 
 function parseJsonc(text: string): any {
-    return JSON.parse(text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''));
+    const { config } = ts.parseConfigFileTextToJson('tsconfig.json', text);
+    return config;
 }
 
 async function loadPlugins(): Promise<PluginManager> {
@@ -23,6 +25,7 @@ async function loadPlugins(): Promise<PluginManager> {
         path.join(STARTERS_DIR, 'angular'),
         path.join(STARTERS_DIR, 'nestjs'),
         path.join(STARTERS_DIR, 'ts-workspace'),
+        path.join(STARTERS_DIR, 'nextjs'),
     ]);
     return pm;
 }
@@ -42,7 +45,7 @@ describe('workspace flow: init + add ts-lib + add angular + add nestjs', () => {
         await cleanup();
     });
 
-    it('should init a workspace, add a ts-lib, an angular app, and a nestjs app', async () => {
+    it('should init a workspace, add a ts-lib, an angular app, a nestjs app and a nextjs app', async () => {
         const plugin = pm.getPlugin<
             ScaffoldTemplatePlugin<
                 InitOptions | (AddOptions & AngularOptions) | (AddOptions & NestJSOptions)
@@ -79,6 +82,7 @@ describe('workspace flow: init + add ts-lib + add angular + add nestjs', () => {
             gitInit: false,
             install: false,
             packageManager: 'npm',
+            basePath: 'packages',
         };
         await plugin.execute(tsLibOptions);
 
@@ -117,6 +121,8 @@ describe('workspace flow: init + add ts-lib + add angular + add nestjs', () => {
             inlineTemplate: false,
             serverRouting: false,
             experimentalZoneless: false,
+
+            basePath: 'packages',
         };
         await plugin.execute(ngOptions);
 
@@ -137,6 +143,10 @@ describe('workspace flow: init + add ts-lib + add angular + add nestjs', () => {
             language: 'ts',
             packageManager: 'npm',
             strict: true,
+            skipGit: true,
+            skipInstall: true,
+
+            basePath: 'packages',
         };
         await plugin.execute(nestOptions);
 
@@ -144,11 +154,44 @@ describe('workspace flow: init + add ts-lib + add angular + add nestjs', () => {
         expect(await fs.pathExists(path.join(apiDir, 'package.json'))).toBe(true);
         expect(await fs.pathExists(path.join(apiDir, 'tsconfig.json'))).toBe(true);
 
+        // 5. Add nextjs app
+        const nextOptions: ExecuteOptions<AddOptions & NextJSOptions> = {
+            workspace: 'my-workspace',
+            template: 'nextjs',
+
+            name: 'my-nextjs',
+            subcommand: 'add',
+            dryRun: false,
+            force: false,
+            version: 'latest',
+            language: 'ts',
+            linter: 'eslint',
+            bundler: 'turbopack',
+            projectType: 'app',
+            tailwind: true,
+            packageManager: 'npm',
+            srcDir: true,
+            example: undefined,
+            examplePath: undefined,
+            importAlias: '@/*',
+            reactCompiler: false,
+            install: false,
+            gitInit: false,
+
+            basePath: 'packages',
+        };
+        await plugin.execute(nextOptions);
+
+        const nextDir = path.join(wsDir, 'packages', 'my-nextjs');
+        expect(await fs.pathExists(path.join(nextDir, 'package.json'))).toBe(true);
+        expect(await fs.pathExists(path.join(nextDir, 'tsconfig.json'))).toBe(true);
+
         // Workspace package.json has all three packages
         const wsPkg = await fs.readJson(path.join(wsDir, 'package.json'));
         expect(wsPkg.workspaces).toContain('packages/my-lib');
         expect(wsPkg.workspaces).toContain('packages/my-app');
         expect(wsPkg.workspaces).toContain('packages/my-api');
+        expect(wsPkg.workspaces).toContain('packages/my-nextjs');
 
         // Workspace tsconfig.json has all three references
         const wsTsconfig = parseJsonc(
@@ -159,6 +202,7 @@ describe('workspace flow: init + add ts-lib + add angular + add nestjs', () => {
                 expect.objectContaining({ path: 'packages/my-lib' }),
                 expect.objectContaining({ path: 'packages/my-app' }),
                 expect.objectContaining({ path: 'packages/my-api' }),
+                expect.objectContaining({ path: 'packages/my-nextjs' }),
             ])
         );
 
@@ -177,5 +221,10 @@ describe('workspace flow: init + add ts-lib + add angular + add nestjs', () => {
             await fs.readFile(path.join(apiDir, 'tsconfig.json'), 'utf-8')
         );
         expect(apiTsconfig.extends).toContain('tsconfig.base.json');
+
+        const nextTsconfig = parseJsonc(
+            await fs.readFile(path.join(nextDir, 'tsconfig.json'), 'utf-8')
+        );
+        expect(nextTsconfig.extends).toContain('tsconfig.base.json');
     }, 180_000);
 });

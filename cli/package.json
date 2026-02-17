@@ -70,7 +70,7 @@
         "vitest": "^4.0.18"
     },
     "dependencies": {
-        "@libria/plugin-loader": "^2.0.0",
+        "@libria/plugin-loader": "^2.1.0",
         "@libria/scaffold-core": "^0.3.4",
         "commander": "^14.0.3",
         "fast-glob": "^3.3.3",
@@ -80,6 +80,7 @@
     "optionalDependencies": {
         "@libria/scaffold-plugin-angular": "^0.0.3",
         "@libria/scaffold-plugin-nestjs": "^0.0.3",
+        "@libria/scaffold-plugin-nextjs": "^0.0.1",
         "@libria/scaffold-plugin-ts-lib": "^0.0.4",
         "@libria/scaffold-plugin-ts-workspace": "^0.0.3"
     }

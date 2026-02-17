@@ -65,6 +65,7 @@
         "vitest": "^2.0.0"
     },
     "dependencies": {
+        "@libria/plugin-loader": "^2.1.0",
         "fs-extra": "^11.3.3"
     }
 }

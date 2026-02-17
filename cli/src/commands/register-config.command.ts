@@ -12,9 +12,76 @@ import {
     removePluginGlob,
 } from '../config';
 import { resolvePackageDir } from '../utils';
+import { PluginManager, PluginMetadata } from '@libria/plugin-loader';
+import { glob } from 'fast-glob';
+
+async function assertCanRemovePlugins(
+    pluginManager: PluginManager,
+    pattern: string
+): Promise<void> {
+    const metadataToRemove = await pluginManager.discoverPlugins(pattern);
+    const allMetadata = pluginManager.getAllMetadata();
+
+    const toRemoveSet = new Set(metadataToRemove.map(m => m.id));
+
+    // Check all loaded plugins to see if they depend on any plugin in the removal set
+    const blockingPlugins = allMetadata
+        .filter(p => !toRemoveSet.has(p.id)) // ignore plugins that are themselves being removed
+        .map(p => {
+            const blockedDeps = p.dependencies?.filter(d => toRemoveSet.has(d.id)) ?? [];
+            return { plugin: p, blockedDeps };
+        })
+        .filter(x => x.blockedDeps.length > 0);
+
+    if (blockingPlugins.length > 0) {
+        // format the message
+        const message = [
+            `Cannot remove plugins matching pattern "${pattern}" because other plugins depend on them:`,
+            ...blockingPlugins.map(
+                bp =>
+                    `- Plugin "${bp.plugin.id}" depends on: ${bp.blockedDeps.map(d => d.id).join(', ')}`
+            ),
+        ].join('\n');
+
+        throw new Error(message);
+    }
+}
+
+async function assertCanAddPlugins(pluginManager: PluginManager, pattern: string) {
+    // discover all plugins that would be added by this glob
+    const metadataToAdd = await pluginManager.discoverPlugins(pattern);
+
+    // all currently loaded plugins
+    const allMetadata = pluginManager.getAllMetadata();
+    const allLoadedOrToAdd = new Map<string, PluginMetadata>();
+    allMetadata.forEach(p => allLoadedOrToAdd.set(p.id, p));
+    metadataToAdd.forEach(p => allLoadedOrToAdd.set(p.id, p)); // include plugins that will be added
+
+    // check dependencies for each plugin we're about to add
+    const missingDeps: { plugin: PluginMetadata; missing: string[] }[] = [];
+
+    for (const plugin of metadataToAdd) {
+        const deps = plugin.dependencies?.map(d => d.id) ?? [];
+        const missing = deps.filter(depId => !allLoadedOrToAdd.has(depId));
+        if (missing.length > 0) {
+            missingDeps.push({ plugin, missing });
+        }
+    }
+
+    if (missingDeps.length > 0) {
+        const message = [
+            `Cannot add plugins matching pattern "${pattern}" because dependencies are missing:`,
+            ...missingDeps.map(
+                md => `- Plugin "${md.plugin.id}" is missing dependencies: ${md.missing.join(', ')}`
+            ),
+        ].join('\n');
+        throw new Error(message);
+    }
+}
 
 export async function registerConfigCommand(
-    program: InteractiveCommand
+    program: InteractiveCommand,
+    pluginManager: PluginManager
 ): Promise<InteractiveCommand> {
     const configCommand = program.command('config').description('Manage lb-scaffold configuration');
 
@@ -36,6 +103,7 @@ export async function registerConfigCommand(
         .description('Add a plugin glob pattern to the config')
         .action(async (glob: string) => {
             try {
+                await assertCanAddPlugins(pluginManager, glob);
                 await addPluginGlob(glob);
                 console.log(`Added plugin pattern: ${glob}`);
             } catch (error) {
@@ -49,6 +117,7 @@ export async function registerConfigCommand(
         .description('Remove a plugin glob pattern from the config')
         .action(async (glob: string) => {
             try {
+                await assertCanRemovePlugins(pluginManager, glob);
                 await removePluginGlob(glob);
                 console.log(`Removed plugin pattern: ${glob}`);
             } catch (error) {
@@ -110,7 +179,7 @@ export async function registerConfigCommand(
         .description('Add an npm package as a plugin source')
         .action(async (name: string) => {
             try {
-                await resolvePackageDir(name);
+                await assertCanAddPlugins(pluginManager, await resolvePackageDir(name));
                 await addPackage(name);
                 console.log(`Added package: ${name}`);
             } catch (error) {
@@ -124,6 +193,7 @@ export async function registerConfigCommand(
         .description('Remove an npm package from plugin sources')
         .action(async (name: string) => {
             try {
+                await assertCanRemovePlugins(pluginManager, await resolvePackageDir(name));
                 await removePackage(name);
                 console.log(`Removed package: ${name}`);
             } catch (error) {
