@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import os from 'os';
 import path from 'path';
 
 export interface LbScaffoldConfig {
@@ -7,6 +8,8 @@ export interface LbScaffoldConfig {
 }
 
 const CONFIG_FILENAME = '.lbscaffold.json';
+
+export const GLOBAL_CONFIG_PATH = path.join(os.homedir(), CONFIG_FILENAME);
 
 /**
  * Find the config file by searching up the directory tree
@@ -38,24 +41,35 @@ export function getDefaultConfigPath(): string {
 }
 
 /**
- * Load the config file
+ * Load a single config file from a specific path
  */
-export async function loadConfig(configPath?: string): Promise<LbScaffoldConfig> {
-    const resolvedPath = configPath ?? (await findConfigPath());
-
-    if (!resolvedPath) {
-        return {};
-    }
-
+export async function loadRawConfig(configPath: string): Promise<LbScaffoldConfig> {
     try {
-        const content = await fs.readFile(resolvedPath, 'utf-8');
+        const content = await fs.readFile(configPath, 'utf-8');
         return JSON.parse(content) as LbScaffoldConfig;
     } catch (error) {
         if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
             return {};
         }
-        throw new Error(`Failed to load config from ${resolvedPath}: ${(error as Error).message}`);
+        throw new Error(`Failed to load config from ${configPath}: ${(error as Error).message}`);
     }
+}
+
+/**
+ * Load the merged config (global defaults + local overrides).
+ * When configPath is provided explicitly, only that file is loaded (no merging).
+ */
+export async function loadConfig(configPath?: string): Promise<LbScaffoldConfig> {
+    if (configPath) {
+        return loadRawConfig(configPath);
+    }
+
+    const globalConfig = await loadRawConfig(GLOBAL_CONFIG_PATH);
+    const localPath = await findConfigPath();
+    const localConfig = localPath ? await loadRawConfig(localPath) : {};
+
+    // Per-key merge: local keys fully override global keys
+    return { ...globalConfig, ...localConfig };
 }
 
 /**
@@ -94,7 +108,8 @@ export async function initConfig(configPath?: string): Promise<string> {
  * Add a plugin glob pattern to the config
  */
 export async function addPluginGlob(glob: string, configPath?: string): Promise<void> {
-    const config = await loadConfig(configPath);
+    const resolvedPath = configPath ?? (await findConfigPath()) ?? getDefaultConfigPath();
+    const config = await loadRawConfig(resolvedPath);
 
     if (!config.plugins) {
         config.plugins = [];
@@ -105,7 +120,7 @@ export async function addPluginGlob(glob: string, configPath?: string): Promise<
     }
 
     config.plugins.push(glob);
-    await saveConfig(config, configPath ?? (await findConfigPath()) ?? getDefaultConfigPath());
+    await saveConfig(config, resolvedPath);
 }
 
 /**
@@ -118,7 +133,7 @@ export async function removePluginGlob(glob: string, configPath?: string): Promi
         throw new Error('No config file found');
     }
 
-    const config = await loadConfig(resolvedPath);
+    const config = await loadRawConfig(resolvedPath);
 
     if (!config.plugins || !config.plugins.includes(glob)) {
         throw new Error(`Plugin pattern '${glob}' not found in config`);
@@ -137,20 +152,10 @@ export async function listPluginGlobs(configPath?: string): Promise<string[]> {
 }
 
 /**
- * Get absolute plugin paths from config globs
+ * Resolve globs from a single config file relative to its directory
  */
-export async function getPluginPaths(configPath?: string): Promise<string[]> {
-    const resolvedConfigPath = configPath ?? (await findConfigPath());
-
-    if (!resolvedConfigPath) {
-        return [];
-    }
-
-    const config = await loadConfig(resolvedConfigPath);
-    const configDir = path.dirname(resolvedConfigPath);
-
-    return (config.plugins ?? []).map(glob => {
-        // If glob is absolute, use as-is; otherwise resolve relative to config file
+function resolveGlobs(globs: string[], configDir: string): string[] {
+    return globs.map(glob => {
         if (path.isAbsolute(glob)) {
             return glob.replace(/\\/g, '/');
         }
@@ -159,10 +164,37 @@ export async function getPluginPaths(configPath?: string): Promise<string[]> {
 }
 
 /**
+ * Get absolute plugin paths from config globs.
+ * When no configPath is given, merges global and local configs:
+ * - If local config defines `plugins`, use local only (resolved relative to local config dir)
+ * - Otherwise, fall through to global `plugins` (resolved relative to $HOME)
+ */
+export async function getPluginPaths(configPath?: string): Promise<string[]> {
+    if (configPath) {
+        const config = await loadRawConfig(configPath);
+        const configDir = path.dirname(configPath);
+        return resolveGlobs(config.plugins ?? [], configDir);
+    }
+
+    const localPath = await findConfigPath();
+    const localConfig = localPath ? await loadRawConfig(localPath) : {};
+
+    // If local defines plugins, use local only
+    if (localConfig.plugins) {
+        return resolveGlobs(localConfig.plugins, path.dirname(localPath!));
+    }
+
+    // Fall through to global
+    const globalConfig = await loadRawConfig(GLOBAL_CONFIG_PATH);
+    return resolveGlobs(globalConfig.plugins ?? [], os.homedir());
+}
+
+/**
  * Add an npm package name to the config
  */
 export async function addPackage(packageName: string, configPath?: string): Promise<void> {
-    const config = await loadConfig(configPath);
+    const resolvedPath = configPath ?? (await findConfigPath()) ?? getDefaultConfigPath();
+    const config = await loadRawConfig(resolvedPath);
 
     if (!config.packages) {
         config.packages = [];
@@ -173,7 +205,7 @@ export async function addPackage(packageName: string, configPath?: string): Prom
     }
 
     config.packages.push(packageName);
-    await saveConfig(config, configPath ?? (await findConfigPath()) ?? getDefaultConfigPath());
+    await saveConfig(config, resolvedPath);
 }
 
 /**
@@ -186,7 +218,7 @@ export async function removePackage(packageName: string, configPath?: string): P
         throw new Error('No config file found');
     }
 
-    const config = await loadConfig(resolvedPath);
+    const config = await loadRawConfig(resolvedPath);
 
     if (!config.packages || !config.packages.includes(packageName)) {
         throw new Error(`Package '${packageName}' not found in config`);
@@ -197,7 +229,8 @@ export async function removePackage(packageName: string, configPath?: string): P
 }
 
 /**
- * List all npm package names in the config
+ * List all npm package names in the config.
+ * When no configPath is given, uses per-key merge (local `packages` overrides global).
  */
 export async function listPackages(configPath?: string): Promise<string[]> {
     const config = await loadConfig(configPath);
