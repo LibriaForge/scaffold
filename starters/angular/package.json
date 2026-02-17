@@ -1,6 +1,6 @@
 {
     "name": "@libria/scaffold-plugin-angular",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Angular cli wrapper template for @libria/scaffold",
     "main": "dist/index.cjs",
     "module": "dist/index.mjs",
@@ -64,7 +64,7 @@
     },
     "dependencies": {
         "@libria/plugin-loader": "^2.1.0",
-        "@libria/scaffold-core": "^0.3.4",
+        "@libria/scaffold-core": "^0.3.5",
         "fs-extra": "^11.3.3"
     }
 }

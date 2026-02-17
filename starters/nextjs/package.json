@@ -1,68 +1,68 @@
 {
-  "name": "@libria/scaffold-plugin-nextjs",
-  "version": "0.0.0",
-  "description": "Scaffold template for NextJS",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "exports": {
-    ".": {
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
+    "name": "@libria/scaffold-plugin-nextjs",
+    "version": "0.0.1",
+    "description": "Scaffold template for NextJS",
+    "main": "dist/index.cjs",
+    "module": "dist/index.mjs",
+    "exports": {
+        ".": {
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            },
+            "import": {
+                "types": "./dist/index.d.mts",
+                "default": "./dist/index.mjs"
+            }
+        }
+    },
+    "type": "module",
+    "scripts": {
+        "build": "npm run typecheck && cross-env NODE_ENV=production tsdown",
+        "build:dev": "tsdown",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest",
+        "lint": "eslint . --ext .ts",
+        "lint:fix": "eslint . --ext .ts --fix",
+        "format": "prettier --write .",
+        "test:coverage": "vitest --coverage",
+        "clean": "npm run lint:fix && npm run format",
+        "build-and-publish": "npm run build && npx @libria/clean-publish build && npx @libria/clean-publish publish"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/https://github.com/LibriaForge/scaffold-starters.git"
+    },
+    "keywords": [
+        "typescript"
+    ],
+    "author": "LibriaForge",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/https://github.com/LibriaForge/scaffold-starters/issues"
+    },
+    "homepage": "https://github.com/https://github.com/LibriaForge/scaffold-starters#readme",
+    "devDependencies": {
+        "@eslint/eslintrc": "^3.3.3",
+        "@eslint/js": "^9.39.2",
+        "@libria/clean-publish": "^1.0.0",
+        "@types/node": "^22.0.0",
+        "@typescript-eslint/eslint-plugin": "^8.0.0",
+        "@typescript-eslint/parser": "^8.0.0",
+        "@vitest/coverage-v8": "^2.0.0",
+        "cross-env": "^10.1.0",
+        "eslint": "^9.0.0",
+        "eslint-config-prettier": "^10.0.0",
+        "eslint-plugin-import": "^2.30.0",
+        "eslint-plugin-prettier": "^5.0.0",
+        "eslint-plugin-unused-imports": "^4.0.0",
+        "prettier": "^3.0.0",
+        "tsdown": "^0.20.0",
+        "typescript": "^5.0.0",
+        "typescript-eslint": "^8.0.0",
+        "vitest": "^2.0.0"
+    },
+    "dependencies": {
+        "@libria/plugin-loader": "^2.1.0"
     }
-  },
-  "type": "module",
-  "scripts": {
-    "build": "npm run typecheck && cross-env NODE_ENV=production tsdown",
-    "build:dev": "tsdown",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "format": "prettier --write .",
-    "test:coverage": "vitest --coverage",
-    "clean": "npm run lint:fix && npm run format",
-    "build-and-publish": "npm run build && npx @libria/clean-publish build && npx @libria/clean-publish publish"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/https://github.com/LibriaForge/scaffold-starters.git"
-  },
-  "keywords": [
-    "typescript"
-  ],
-  "author": "LibriaForge",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/https://github.com/LibriaForge/scaffold-starters/issues"
-  },
-  "homepage": "https://github.com/https://github.com/LibriaForge/scaffold-starters#readme",
-  "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
-    "@eslint/js": "^9.39.2",
-    "@libria/clean-publish": "^1.0.0",
-    "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "@vitest/coverage-v8": "^2.0.0",
-    "cross-env": "^10.1.0",
-    "eslint": "^9.0.0",
-    "eslint-config-prettier": "^10.0.0",
-    "eslint-plugin-import": "^2.30.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "eslint-plugin-unused-imports": "^4.0.0",
-    "prettier": "^3.0.0",
-    "tsdown": "^0.20.0",
-    "typescript": "^5.0.0",
-    "typescript-eslint": "^8.0.0",
-    "vitest": "^2.0.0"
-  },
-  "dependencies": {
-    "@libria/plugin-loader": "^2.1.0"
-  }
 }
