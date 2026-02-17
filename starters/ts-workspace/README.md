@@ -1,42 +1,65 @@
-# @libria/scaffold-nestjs
+# @libria/scaffold-plugin-ts-workspace
 
-NestJS CLI wrapper template for [@libria/scaffold](https://github.com/LibriaForge/scaffold).
+TypeScript workspace (monorepo) template for [@libria/scaffold](https://github.com/LibriaForge/scaffold).
 
-This plugin scaffolds new NestJS projects by wrapping `@nestjs/cli`, exposing its options through the scaffold plugin interface. Options are dynamically resolved based on the selected NestJS version.
+This plugin manages TypeScript monorepo workspaces with npm workspaces and TypeScript project references. It provides two subcommands: `init` to create a new workspace, and `add` to add projects into an existing workspace.
 
 ## Installation
 
 ```bash
-npm install @libria/scaffold-nestjs
+npm install @libria/scaffold-plugin-ts-workspace
 ```
 
 ## Usage
 
+### Initialize a new workspace
+
 ```bash
-# Interactive — prompts for version first, then version-specific options
-scaffold new nestjs my-api
+# Interactive — prompts for all options
+lb-scaffold new ts-workspace my-monorepo
 
-# Non-interactive — pass all options via CLI
-scaffold new nestjs my-api --version 11 --language TypeScript --package-manager pnpm
+# Non-interactive
+lb-scaffold new ts-workspace my-monorepo --package-manager npm --git-init
+```
 
-# Show available options for a specific version
-scaffold new nestjs my-api --version 10 --help
+### Add a project to an existing workspace
+
+```bash
+# Interactive — prompts for template and options
+lb-scaffold new ts-workspace my-project --workspace ./my-monorepo --template ts-lib
+
+# Add an Angular app
+lb-scaffold new ts-workspace my-app --workspace ./my-monorepo --template angular
+
+# Add a NestJS backend
+lb-scaffold new ts-workspace my-api --workspace ./my-monorepo --template nestjs
 ```
 
 ## Supported Options
 
+### `init` subcommand
+
 | Option | Type | Description |
 |--------|------|-------------|
-| `--version` | select | NestJS major version (e.g. 11, 10) |
-| `--language` | select | Programming language (TypeScript, JavaScript) |
 | `--package-manager` | select | Package manager (npm, yarn, pnpm) |
-| `--strict` | boolean | Enable TypeScript strict mode |
-| `--skip-git` | boolean | Skip git initialization |
-| `--skip-install` | boolean | Skip installing dependencies |
+| `--git-init` | boolean | Initialize a git repository |
+
+### `add` subcommand
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `--workspace` | string | Path to the workspace root |
+| `--template` | select | Template to use (ts-lib, angular, nestjs, nextjs) |
+| `--base-path` | string | Subdirectory for the new project (e.g. `packages`) |
 
 ## How It Works
 
-The plugin wraps `npx @nestjs/cli@<version> new <name>` and translates scaffold options into NestJS CLI flags. The option set is auto-generated from NestJS's JSON schemas across the last 2 major versions.
+The `init` subcommand creates a workspace directory with a root `package.json` (configured for npm workspaces), a shared `tsconfig.base.json`, and a root `tsconfig.json` with project references.
+
+The `add` subcommand delegates to other template plugins (ts-lib, angular, nestjs, nextjs) to scaffold the project, then automatically:
+- Adds the project to the workspace's `package.json` workspaces array
+- Adds a TypeScript project reference to the root `tsconfig.json`
+- Patches the project's `tsconfig.json` to extend from the workspace's `tsconfig.base.json`
 
 ## License
 

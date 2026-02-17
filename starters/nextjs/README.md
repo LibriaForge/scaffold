@@ -1,6 +1,8 @@
 # @libria/scaffold-plugin-nextjs
 
-Scaffold template for NextJS
+Next.js CLI wrapper template for [@libria/scaffold](https://github.com/LibriaForge/scaffold).
+
+This plugin scaffolds new Next.js projects by wrapping `create-next-app`, exposing its options through the scaffold plugin interface.
 
 ## Installation
 
@@ -10,48 +12,37 @@ npm install @libria/scaffold-plugin-nextjs
 
 ## Usage
 
-```typescript
-import { add, subtract, multiply, divide } from '@libria/scaffold-plugin-nextjs';
-
-console.log(add(2, 3));      // 5
-console.log(subtract(5, 3)); // 2
-console.log(multiply(4, 5)); // 20
-console.log(divide(10, 2));  // 5
-```
-
-## API
-
-### `add(a: number, b: number): number`
-
-Adds two numbers together.
-
-### `subtract(a: number, b: number): number`
-
-Subtracts the second number from the first.
-
-### `multiply(a: number, b: number): number`
-
-Multiplies two numbers together.
-
-### `divide(a: number, b: number): number`
-
-Divides the first number by the second. Throws an error if the divisor is zero.
-
-## Development
-
 ```bash
-# Install dependencies
-npm install
+# Interactive — prompts for all options
+lb-scaffold new nextjs my-app
 
-# Run tests
-npm test
+# Non-interactive — pass all options via CLI
+lb-scaffold new nextjs my-app --language typescript --tailwind --bundler turbopack
 
-# Build
-npm run build
-
-# Lint
-npm run lint
+# Show available options
+lb-scaffold new nextjs my-app --help
 ```
+
+## Supported Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `--version` | string | Next.js version (default: latest) |
+| `--language` | select | Language (typescript, javascript) |
+| `--tailwind` | boolean | Enable Tailwind CSS (default: true) |
+| `--react-compiler` | boolean | Enable React compiler (default: false) |
+| `--linter` | select | Linter (eslint, biome, none) |
+| `--project-type` | select | Project type (app, api, empty) |
+| `--src-dir` | boolean | Initialize with src/ directory |
+| `--bundler` | select | Bundler (turbopack, webpack) |
+| `--import-alias` | string | Import alias pattern (default: @/*) |
+| `--package-manager` | select | Package manager (npm, yarn, pnpm, bun) |
+| `--install` | boolean | Install dependencies (default: true) |
+| `--git-init` | boolean | Initialize git repository (default: true) |
+
+## How It Works
+
+The plugin wraps `npx create-next-app@<version> <name>` and translates scaffold options into Next.js CLI flags.
 
 ## License
 

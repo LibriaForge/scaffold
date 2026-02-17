@@ -1,4 +1,4 @@
-# @libria/scaffold-ts-lib
+# @libria/scaffold-plugin-ts-lib
 
 TypeScript library template for [@libria/scaffold](https://github.com/LibriaForge/scaffold).
 
@@ -7,17 +7,17 @@ This plugin scaffolds new TypeScript library projects with a pre-configured buil
 ## Installation
 
 ```bash
-npm install @libria/scaffold-ts-lib
+npm install @libria/scaffold-plugin-ts-lib
 ```
 
 ## Usage
 
 ```bash
 # Interactive — prompts for all options
-scaffold new ts-lib my-lib
+lb-scaffold new ts-lib my-lib
 
 # Non-interactive
-scaffold new ts-lib my-lib --author "John Doe" --license MIT
+lb-scaffold new ts-lib my-lib --author "John Doe" --license MIT
 ```
 
 ## What You Get

@@ -1,57 +1,30 @@
 # automatic-template-generators
 
-Generates automatically template plugins that wrap existing CLIs, for instance, angular cli
+Internal tool that auto-generates CLI wrapper template plugins for [@libria/scaffold](https://github.com/LibriaForge/scaffold).
 
-## Installation
-
-```bash
-npm install automatic-template-generators
-```
+This package reads CLI option schemas from tools like Angular CLI, NestJS CLI, and Next.js CLI, then generates the corresponding scaffold plugin source code with all options, types, and version mappings.
 
 ## Usage
 
-```typescript
-import { add, subtract, multiply, divide } from 'automatic-template-generators';
-
-console.log(add(2, 3));      // 5
-console.log(subtract(5, 3)); // 2
-console.log(multiply(4, 5)); // 20
-console.log(divide(10, 2));  // 5
-```
-
-## API
-
-### `add(a: number, b: number): number`
-
-Adds two numbers together.
-
-### `subtract(a: number, b: number): number`
-
-Subtracts the second number from the first.
-
-### `multiply(a: number, b: number): number`
-
-Multiplies two numbers together.
-
-### `divide(a: number, b: number): number`
-
-Divides the first number by the second. Throws an error if the divisor is zero.
-
-## Development
+This is an internal development tool, not published to npm.
 
 ```bash
-# Install dependencies
-npm install
+# Generate all template wrappers
+npm run build-and-generate-all
 
-# Run tests
-npm test
-
-# Build
-npm run build
-
-# Lint
-npm run lint
+# Generate individual wrappers
+npm run generate:angular
+npm run generate:nestjs
+npm run generate:nextjs
 ```
+
+## How It Works
+
+Each generator:
+1. Reads the target CLI's option schema (JSON schemas, help output, etc.)
+2. Maps options across supported major versions
+3. Generates TypeScript source files with typed options, version-specific defaults, and CLI flag translation
+4. Outputs the generated code into the corresponding starter plugin's `src/` directory
 
 ## License
 
