@@ -4,6 +4,7 @@
     "dist/**",
     "README.md",
     "LICENSE",
+    "template-files/**",
     "plugin.json"
   ],
   "packageJson": {
