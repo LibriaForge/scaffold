@@ -1,6 +1,6 @@
 {
     "name": "@libria/scaffold",
-    "version": "0.3.2",
+    "version": "0.3.8",
     "description": "A pluggable CLI that transforms blank directories into production-ready codebases in seconds",
     "main": "dist/cli/index.cjs",
     "module": "dist/cli/index.mjs",
@@ -21,9 +21,10 @@
     },
     "type": "module",
     "scripts": {
-        "build": "cross-env NODE_ENV=production tsdown",
+        "build": "npm run typecheck && cross-env NODE_ENV=production tsdown",
         "build:dev": "tsdown",
         "build:all": "npm run build",
+        "typecheck": "tsc --noEmit",
         "test": "vitest",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
@@ -69,17 +70,18 @@
         "vitest": "^4.0.18"
     },
     "dependencies": {
-        "@libria/plugin-loader": "^2.0.0-alpha",
-        "@libria/scaffold-core": "^0.3.1",
+        "@libria/plugin-loader": "^2.1.0",
+        "@libria/scaffold-core": "^0.3.7",
         "commander": "^14.0.3",
         "fast-glob": "^3.3.3",
         "fs-extra": "^11.3.3",
         "interactive-commander": "^0.6.0"
     },
     "optionalDependencies": {
-        "@libria/scaffold-plugin-angular": "^0.0.1",
-        "@libria/scaffold-plugin-nestjs": "^0.0.1",
-        "@libria/scaffold-plugin-ts-lib": "^0.0.1",
-        "@libria/scaffold-plugin-ts-workspace": "^0.0.1"
+        "@libria/scaffold-plugin-angular": "^0.0.6",
+        "@libria/scaffold-plugin-nestjs": "^0.0.5",
+        "@libria/scaffold-plugin-nextjs": "^0.0.3",
+        "@libria/scaffold-plugin-ts-lib": "^0.0.7",
+        "@libria/scaffold-plugin-ts-workspace": "^0.0.6"
     }
 }

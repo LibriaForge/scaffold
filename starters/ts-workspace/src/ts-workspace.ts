@@ -30,12 +30,14 @@ export default definePlugin<ScaffoldTemplatePlugin>({
                         case 'init':
                             return {
                                 gitInit: {
+                                    type: 'boolean',
                                     flags: '--git-init',
                                     description: 'Initialize git repository?',
                                     defaultValue: true,
                                 },
                                 packageManager: {
-                                    flags: '--package-manager',
+                                    type: 'string',
+                                    flags: '--package-manager <value>',
                                     description: 'Package Manager (npm/yarn/pnpm):',
                                     choices: ['npm', 'yarn', 'pnpm'],
                                     defaultValue: 'npm',
@@ -43,11 +45,19 @@ export default definePlugin<ScaffoldTemplatePlugin>({
                             } satisfies InitOptions;
                         case 'add': {
                             const addBase: AddOptions = {
+                                basePath: {
+                                    type: 'string',
+                                    flags: '--base-path <path>',
+                                    description: 'Base path for the project:',
+                                    defaultValue: 'packages',
+                                },
                                 workspace: {
+                                    type: 'string',
                                     flags: '--workspace <workspace>',
                                     description: 'Workspace to use:',
                                 },
                                 template: {
+                                    type: 'string',
                                     flags: '--template <template>',
                                     description: 'Template to use:',
                                     choices: templateChoices,

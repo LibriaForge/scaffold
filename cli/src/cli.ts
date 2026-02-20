@@ -10,9 +10,6 @@ import { registerConfigCommand, registerNewCommand } from './commands';
 import { getPluginPaths, listPackages } from './config';
 import { resolvePackageDir } from './utils';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PLUGINS_FOLDER = path.resolve(__dirname, '../templates').replace(/\\/g, '/');
-
 // Load user plugins from config
 const userPluginPaths = await getPluginPaths();
 
@@ -27,13 +24,12 @@ const packagePaths = await Promise.all(
 );
 
 const pluginManager = new PluginManager();
-await pluginManager.loadPlugins([PLUGINS_FOLDER, ...userPluginPaths, ...packagePaths]);
-
+await pluginManager.loadPlugins([...userPluginPaths, ...packagePaths]);
 const program = new InteractiveCommand();
 program.name('lb-scaffold').description('Scaffold new projects from templates');
 
 await registerNewCommand(program, pluginManager);
-await registerConfigCommand(program);
+await registerConfigCommand(program, pluginManager);
 
 // Enable interactive mode by default
 program.addOption(new Option('-i, --interactive', 'Run in interactive mode').default(true));

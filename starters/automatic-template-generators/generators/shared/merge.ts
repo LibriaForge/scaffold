@@ -15,17 +15,20 @@ export function mergeSchemas(
             if (prop.oneOf && !prop.enum) continue;
 
             const existing = propMap.get(name);
+            const itemEnums = prop.type === 'array' && prop.items?.enum ? prop.items.enum : undefined;
+            const enumSource = prop.enum ?? itemEnums;
+
             if (existing) {
                 if (!existing.supportedVersions.includes(version.major)) {
                     existing.supportedVersions.push(version.major);
                 }
-                if (prop.enum) {
+                if (enumSource) {
                     const currentEnums = new Set(existing.enumValues ?? []);
-                    for (const val of prop.enum) currentEnums.add(val);
+                    for (const val of enumSource) currentEnums.add(val);
                     existing.enumValues = [...currentEnums];
                 }
             } else {
-                const type = prop.type ?? (prop.enum ? 'string' : 'unknown');
+                const type = prop.type ?? (prop.enum || itemEnums ? 'string' : 'unknown');
                 const promptType: 'select' | 'confirm' =
                     type === 'boolean' ? 'confirm' : 'select';
 
@@ -34,7 +37,7 @@ export function mergeSchemas(
                     type,
                     description: prop.description ?? '',
                     defaultValue: prop.default,
-                    enumValues: prop.enum ? [...prop.enum] : undefined,
+                    enumValues: enumSource ? [...enumSource] : undefined,
                     supportedVersions: [version.major],
                     promptType,
                     friendlyMessage: config.friendlyMessages[name] ?? prop.description ?? name,

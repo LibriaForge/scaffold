@@ -1,4 +1,4 @@
-# @libria/scaffold-angular
+# @libria/scaffold-plugin-angular
 
 Angular CLI wrapper template for [@libria/scaffold](https://github.com/LibriaForge/scaffold).
 
@@ -7,20 +7,20 @@ This plugin scaffolds new Angular projects by wrapping `@angular/cli`, exposing 
 ## Installation
 
 ```bash
-npm install @libria/scaffold-angular
+npm install @libria/scaffold-plugin-angular
 ```
 
 ## Usage
 
 ```bash
 # Interactive — prompts for version first, then version-specific options
-scaffold new angular my-app
+lb-scaffold new angular my-app
 
 # Non-interactive — pass all options via CLI
-scaffold new angular my-app --version 21 --style scss --routing --ssr
+lb-scaffold new angular my-app --version 21 --style scss --routing --ssr
 
 # Show available options for a specific version
-scaffold new angular my-app --version 18 --help
+lb-scaffold new angular my-app --version 18 --help
 ```
 
 ## Supported Options

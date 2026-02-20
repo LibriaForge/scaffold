@@ -6,8 +6,9 @@ import {
     SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
     ScaffoldTemplatePluginOption,
     ScaffoldTemplatePluginOptions,
+    OptionTypeMap,
 } from '@libria/scaffold-core';
-import { Command, InteractiveCommand, Option } from 'interactive-commander';
+import { Command, InteractiveCommand, InteractiveOption } from 'interactive-commander';
 
 // ── Prompting helpers (readline-based, zero dependencies) ────────────────────
 
@@ -61,13 +62,36 @@ async function promptInput(message: string, defaultValue?: unknown): Promise<str
 
 // ── Option type detection ────────────────────────────────────────────────────
 
-function isBooleanFlag(opt: ScaffoldTemplatePluginOption): boolean {
+function isBooleanFlag(opt: ScaffoldTemplatePluginOption<keyof OptionTypeMap>): boolean {
     return !opt.flags.includes('<') && !opt.choices?.length;
 }
 
 // ── Prompt for a single option ───────────────────────────────────────────────
 
-async function promptForOption(key: string, def: ScaffoldTemplatePluginOption): Promise<unknown> {
+async function promptForOption(
+    key: string,
+    def: ScaffoldTemplatePluginOption<keyof OptionTypeMap>
+): Promise<unknown> {
+    const optType = def.type as string;
+    if (optType === 'array') {
+        const choices = (def.choices ?? []) as string[];
+        const hint = choices.length
+            ? ` (comma-separated, choices: ${choices.join(', ')})`
+            : ' (comma-separated)';
+        const defaultStr = Array.isArray(def.defaultValue)
+            ? def.defaultValue.join(', ')
+            : def.defaultValue !== undefined
+              ? String(def.defaultValue)
+              : '';
+        const answer = await ask(`  ${def.description}${hint} [${defaultStr}]: `);
+        const raw = answer.trim() || defaultStr;
+        if (!raw) return choices.length ? [] : [];
+        const parts = raw
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+        return choices.length ? parts.filter(p => choices.includes(p)) : parts;
+    }
     if (def.choices?.length) {
         return promptSelect(def.description, def.choices, def.defaultValue);
     }
@@ -118,37 +142,114 @@ async function resolveOptions(
 }
 
 // ── Argv pre-parsing ─────────────────────────────────────────────────────────
+function castValue(
+    type: 'string' | 'boolean' | 'number' | 'array',
+    value: string,
+    choices?: string[]
+): string | number | boolean | string[] {
+    if (type === 'array') {
+        const parts = value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+        if (choices?.length) {
+            return parts.filter(p => choices.includes(p));
+        }
+        return parts;
+    }
+    if (type === 'number') return Number(value);
+    if (type === 'boolean') return value === 'true';
+    return value;
+}
+
 /**
  * Pre-parse process.argv to extract values for a set of option definitions.
  * This is a lightweight scan — no full Commander parse — so we can call
  * getOptions() with the values before Commander registers anything.
  */
 function preParseArgv(
-    optionDefs: Record<string, ScaffoldTemplatePluginOption>
-): Record<string, string> {
-    const args = process.argv.slice(2);
-    const result: Record<string, string> = {};
+    defs: ScaffoldTemplatePluginOption<keyof OptionTypeMap>[]
+): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    const args = [...process.argv];
+    const remaining: string[] = [];
 
-    for (const [key, def] of Object.entries(optionDefs)) {
-        if (def === undefined) continue;
+    // skip first two (node + cli path)
+    remaining.push(args[0], args[1]);
 
-        // Extract the --flag-name from the flags string
-        const flagMatch = def.flags.match(/--([a-z][a-z-]*)/i);
-        if (!flagMatch) continue;
-        const flagName = `--${flagMatch[1]}`;
+    for (let i = 2; i < args.length; i++) {
+        const arg = args[i];
 
-        // Check for --flag value  or  --flag=value
-        const eqArg = args.find(a => a.startsWith(`${flagName}=`));
-        if (eqArg) {
-            result[key] = eqArg.split('=')[1];
-            continue;
+        let matched = false;
+
+        for (const def of defs) {
+            const flagMatch = def.flags.match(/--([a-z][a-z-]*)/i);
+            if (!flagMatch) continue;
+
+            const baseName = flagMatch[1];
+            const positive = `--${baseName}`;
+            const negative = `--no-${baseName}`;
+            const key = baseName.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+
+            // -----------------------
+            // BOOLEAN NEGATION SUPPORT
+            // -----------------------
+            if (arg === negative) {
+                result[key] = false;
+                matched = true;
+                break;
+            }
+
+            // -----------------------
+            // BOOLEAN TRUE SUPPORT
+            // -----------------------
+            if (arg === positive && def.type === 'boolean') {
+                result[key] = true;
+                matched = true;
+                break;
+            }
+
+            // -----------------------
+            // --flag=value (or --flag=v1,v2 for array)
+            // -----------------------
+            if (arg.startsWith(`${positive}=`)) {
+                const value = arg.split('=').slice(1).join('=').trim();
+                if ((def.type as string) === 'array') {
+                    result[key] = castValue('array', value, def.choices as string[] | undefined);
+                } else {
+                    result[key] = castValue(def.type as 'string' | 'boolean' | 'number', value);
+                }
+                matched = true;
+                break;
+            }
+
+            // -----------------------
+            // --flag value [value ...] (variadic for array)
+            // -----------------------
+            if (arg === positive && def.type !== 'boolean') {
+                if ((def.type as string) === 'array') {
+                    const collected: string[] = [];
+                    for (let j = i + 1; j < args.length; j++) {
+                        const next = args[j];
+                        if (next.startsWith('--')) break;
+                        if (def.choices?.length && !(def.choices as string[]).includes(next)) break;
+                        collected.push(next);
+                    }
+                    result[key] = def.choices?.length
+                        ? collected.filter(c => (def.choices as string[]).includes(c))
+                        : collected;
+                    i += collected.length;
+                } else {
+                    result[key] = castValue(def.type as 'string' | 'number', args[i + 1]);
+                    i++;
+                }
+                matched = true;
+                break;
+            }
         }
 
-        const idx = args.indexOf(flagName);
-        if (idx !== -1 && idx + 1 < args.length) {
-            // Boolean flags (no <value> in flags string) don't consume next arg
-            if (!def.flags.includes('<')) continue;
-            result[key] = args[idx + 1];
+        if (!matched) {
+            remaining.push(arg);
         }
     }
 
@@ -157,11 +258,19 @@ function preParseArgv(
 
 // ── Commander option registration ────────────────────────────────────────────
 
-function registerOption(cmd: Command, def: ScaffoldTemplatePluginOption): void {
-    const cmdOption = new Option(def.flags, def.description);
+function registerOption(
+    cmd: Command,
+    def: ScaffoldTemplatePluginOption<keyof OptionTypeMap>
+): void {
+    const cmdOption = new InteractiveOption(def.flags, def.description);
 
     if (def.defaultValue !== undefined) {
-        cmdOption.default(def.defaultValue);
+        // Commander variadic options expect array default; scalar default for non-array
+        if ((def.type as string) === 'array' && !Array.isArray(def.defaultValue)) {
+            cmdOption.default([]);
+        } else {
+            cmdOption.default(def.defaultValue);
+        }
     }
     if (def.choices?.length) {
         cmdOption.choices(def.choices.map(String));
@@ -171,10 +280,24 @@ function registerOption(cmd: Command, def: ScaffoldTemplatePluginOption): void {
     }
 
     cmd.addOption(cmdOption);
+
+
+    // Register --no-* negation option for boolean flags
+    if (def.type === 'boolean' && isBooleanFlag(def)) {
+        const flagMatch = def.flags.match(/--([a-z][a-z-]*)/i);
+        if (flagMatch) {
+            const negationName = flagMatch[1];
+            const negationDescription = `Disable ${def.description.toLowerCase()}`;
+            const negationOption = new InteractiveOption(`--no-${negationName}`, negationDescription);
+            if (def.defaultValue === true) {
+                negationOption.default(false);
+            }
+            cmd.addOption(negationOption);
+        }
+    }
 }
 
 // ── Plugin command registration helper ────────────────────────────────────────
-
 /**
  * Registers a single command for a plugin (or subcommand), wiring up
  * iterative option resolution and the execute action.
@@ -190,8 +313,10 @@ async function registerPluginCommand(
         .command(commandName)
         .description(description)
         .argument('<name>', 'Project name')
-        .option('--dry-run', 'Simulate without writing files', false)
-        .option('--force', 'Overwrite existing files', false)
+        .option('--no-dry-run', 'Write files')
+        .option('--dry-run', 'Simulate without writing files')
+        .option('--no-force', 'Do not overwrite existing files')
+        .option('--force', 'Overwrite existing files')
         .allowUnknownOption(true);
 
     // Iteratively resolve options from argv so --help shows the right set.
@@ -207,7 +332,9 @@ async function registerPluginCommand(
         const newKeys = [...currentKeys].filter(k => !previousKeys.has(k));
         if (newKeys.length === 0) break;
 
-        const parsed = preParseArgv(optionDefs as Record<string, ScaffoldTemplatePluginOption>);
+        const parsed = preParseArgv(
+            Object.values(optionDefs) as ScaffoldTemplatePluginOption<keyof OptionTypeMap>[]
+        );
         preCollected = { ...preCollected, ...parsed };
         previousKeys = currentKeys;
 

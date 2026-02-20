@@ -1,32 +1,45 @@
-import type {GenerateFileConfig, MergedProperty} from './types';
-import {escapeQuotes, toKebabCase} from './utils';
+import type { GenerateFileConfig, MergedProperty } from './types';
+import { escapeQuotes, toKebabCase } from './utils';
 
-function generateVersionOption(I: (d: number) => string, config: GenerateFileConfig, sortedMajors: number[], depth: number): string[] {
+function generateVersionOption(
+    I: (d: number) => string,
+    config: GenerateFileConfig,
+    sortedMajors: number[],
+    depth: number
+): string[] {
     const lines: string[] = [];
     lines.push(`${I(depth)}version: {`);
+    lines.push(`${I(depth + 1)}type: 'string',`);
     lines.push(`${I(depth + 1)}flags: '--version <version>',`);
     lines.push(`${I(depth + 1)}description: '${config.versionDescription}',`);
-    lines.push(`${I(depth + 1)}choices: [${sortedMajors.map((m) => `'${m}'`).join(', ')}],`);
+    lines.push(`${I(depth + 1)}choices: [${sortedMajors.map(m => `'${m}'`).join(', ')}],`);
     lines.push(`${I(depth + 1)}defaultValue: '${sortedMajors[0]}',`);
     lines.push(`${I(depth)}},`);
     return lines;
 }
 
-function generateOptionDef(I: (d: number) => string, prop: MergedProperty, depth: number): string[] {
+function generateOptionDef(
+    I: (d: number) => string,
+    prop: MergedProperty,
+    depth: number
+): string[] {
     const lines: string[] = [];
     const flag = toKebabCase(prop.name);
+    const valueType =
+        prop.type === 'boolean' ? 'boolean' : prop.type === 'array' ? 'array' : 'string';
     lines.push(`${I(depth)}${prop.name}: {`);
-
+    lines.push(`${I(depth + 1)}type: '${valueType}',`);
     if (prop.type === 'boolean') {
         lines.push(`${I(depth + 1)}flags: '--${flag}',`);
     } else {
-        lines.push(`${I(depth + 1)}flags: '--${flag} <value>',`);
+        const isArray = prop.type === 'array';
+        lines.push(`${I(depth + 1)}flags: '--${flag} <value${isArray ? '...' : ''}>',`);
     }
 
     lines.push(`${I(depth + 1)}description: '${escapeQuotes(prop.friendlyMessage)}',`);
 
     if (prop.enumValues) {
-        lines.push(`${I(depth + 1)}choices: [${prop.enumValues.map((v) => `'${v}'`).join(', ')}],`);
+        lines.push(`${I(depth + 1)}choices: [${prop.enumValues.map(v => `'${v}'`).join(', ')}],`);
     }
 
     if (prop.defaultValue !== undefined) {
@@ -44,7 +57,7 @@ function generateOptionDef(I: (d: number) => string, prop: MergedProperty, depth
 export function generateFile(
     mergedProps: MergedProperty[],
     majors: number[],
-    config: GenerateFileConfig,
+    config: GenerateFileConfig
 ): string {
     const lines: string[] = [];
     const sortedMajors = [...majors].sort((a, b) => b - a);
@@ -53,26 +66,25 @@ export function generateFile(
     // ── Imports
     lines.push(`import {execSync} from 'child_process';`);
     lines.push(`import {definePlugin, PluginContext} from '@libria/plugin-loader';`);
-    lines.push(`import type {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions} from '@libria/scaffold-core';`);
+    lines.push(
+        `import {ScaffoldTemplatePlugin, ScaffoldTemplatePluginOption, ExecuteOptions, SCAFFOLD_TEMPLATE_PLUGIN_TYPE, OptionTypeMap} from '@libria/scaffold-core';`
+    );
     lines.push(``);
 
     // ── Options interface (union of all options across all versions)
     lines.push(`export interface ${config.interfaceName} {`);
-    lines.push(`${I(1)}version: ScaffoldTemplatePluginOption<string>;`);
+    lines.push(`${I(1)}version: ScaffoldTemplatePluginOption<'string'>;`);
     for (const prop of mergedProps) {
-        const valueType = prop.type === 'boolean' ? 'boolean' : 'string';
-        lines.push(`${I(1)}${prop.name}: ScaffoldTemplatePluginOption<${valueType}>;`);
+        const valueType =
+            prop.type === 'boolean' ? 'boolean' : prop.type === 'array' ? 'array' : 'string';
+        lines.push(`${I(1)}${prop.name}: ScaffoldTemplatePluginOption<'${valueType}'>;`);
     }
     lines.push(`}`);
     lines.push(``);
 
-    // ── Plugin type constant
-    lines.push(`export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';`);
-    lines.push(``);
-
     // ── Supported versions per option (used in execute to skip irrelevant flags)
     const versionSpecificProps = mergedProps.filter(
-        (p) => !sortedMajors.every((m) => p.supportedVersions.includes(m)),
+        p => !sortedMajors.every(m => p.supportedVersions.includes(m))
     );
     if (versionSpecificProps.length > 0) {
         lines.push(`const SUPPORTED_VERSIONS: Record<string, number[]> = {`);
@@ -107,8 +119,9 @@ export function generateFile(
     lines.push(``);
 
     // Phase 2: return all options for the selected version
-    lines.push(`${I(5)}const major = Number(options.version);`);
-    lines.push(`${I(5)}const allOptions: Record<string, ScaffoldTemplatePluginOption> = {`);
+    lines.push(
+        `${I(5)}const allOptions: Record<string, ScaffoldTemplatePluginOption<keyof OptionTypeMap>> = {`
+    );
 
     // Version option (included in phase 2 so it stays visible)
     lines.push(...generateVersionOption(I, config, sortedMajors, 6));
@@ -123,6 +136,7 @@ export function generateFile(
 
     // Version filtering logic
     if (versionSpecificProps.length > 0) {
+        lines.push(`${I(5)}const major = Number(options.version);`);
         lines.push(`${I(5)}for (const [key, versions] of Object.entries(SUPPORTED_VERSIONS)) {`);
         lines.push(`${I(6)}if (!versions.includes(major)) {`);
         lines.push(`${I(7)}delete allOptions[key];`);
@@ -138,13 +152,15 @@ export function generateFile(
     lines.push(`${I(4)}execute: async (options: ExecuteOptions<${config.interfaceName}>) => {`);
     lines.push(`${I(5)}const {name, dryRun} = options;`);
     lines.push(`${I(5)}const major = Number(options.version);`);
+    lines.push(`${I(5)}console.log('Executing for version:', major);`);
+
     lines.push(`${I(5)}const args: string[] = [];`);
     lines.push(``);
 
     for (const prop of mergedProps) {
         const flag = toKebabCase(prop.name);
         const optAccess = `options.${prop.name}`;
-        const allMajorsSupported = sortedMajors.every((m) => prop.supportedVersions.includes(m));
+        const allMajorsSupported = sortedMajors.every(m => prop.supportedVersions.includes(m));
 
         // Version-specific options: check SUPPORTED_VERSIONS before adding flag
         if (!allMajorsSupported) {
@@ -153,7 +169,11 @@ export function generateFile(
 
         const indent = allMajorsSupported ? I(5) : I(6);
 
-        if (prop.enumValues) {
+        if (prop.type === 'array') {
+            lines.push(`${indent}if (Array.isArray(${optAccess})) {`);
+            lines.push(`${indent}  for (const v of ${optAccess}) args.push(\`--${flag}=\${v}\`);`);
+            lines.push(`${indent}} else if (${optAccess}) { args.push(\`--${flag}=\${${optAccess}}\`); }`);
+        } else if (prop.enumValues) {
             lines.push(`${indent}args.push(\`--${flag}=\${${optAccess}}\`);`);
         } else if (prop.type === 'boolean') {
             if (config.defaultFalseBooleans.has(prop.name)) {

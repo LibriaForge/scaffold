@@ -13,7 +13,8 @@ Forge your next project with lightning-fast scaffolding. A pluggable CLI that tr
 - **NPM Package Support**: Load templates from npm packages
 - **Dry Run Mode**: Preview what will be generated before committing
 - **Force Overwrite**: Safely regenerate existing projects
-- **Template Plugins**: Angular, NestJS, TypeScript libraries, and workspaces
+- **Global + Local Config**: Global `~/.lbscaffold.json` defaults with local per-key overrides
+- **Template Plugins**: Angular, NestJS, Next.js, TypeScript libraries, and workspaces
 
 ## Installation
 
@@ -103,7 +104,7 @@ A modern TypeScript library template with:
 
 A complete Angular application template using the official Angular CLI. Supports:
 
-- Angular versions: Latest, 20, 19, 18, 17, 16
+- Angular versions: Latest, 21, 20, 19, 18, 17, 16
 - Stylesheet formats: SCSS, CSS, Sass, Less
 - Optional routing module
 - Optional Server-Side Rendering (SSR)
@@ -144,41 +145,79 @@ lb-scaffold new nestjs my-nest-api
 - Skip git initialization?
 - Skip package installation?
 
-### ts-workspace
+### nextjs
 
-A TypeScript workspace (monorepo) template using pnpm workspaces. Creates a monorepo with multiple project types:
+A Next.js application template using the official `create-next-app`. Supports:
 
-- TypeScript libraries (ts-lib)
-- Angular applications
-- NestJS backends
-- Shared packages
-- pnpm workspace configuration
-- Turbo or Nx for monorepo tooling (optional)
+- Tailwind CSS (enabled by default)
+- TypeScript or JavaScript
+- App Router, API-only, or empty project types
+- Turbopack or Webpack bundler
+- ESLint, Biome, or no linter
+- Package manager choice: npm, Yarn, pnpm, or Bun
 
 ```bash
-lb-scaffold new ts-workspace my-monorepo
+lb-scaffold new nextjs my-next-app
 ```
 
 **Interactive prompts:**
-- Project types to include
-- Monorepo tool (Turbo, Nx, or none)
-- Skip git initialization?
-- Skip package installation?
+- Next.js version
+- Language (TypeScript/JavaScript)
+- Enable Tailwind CSS?
+- Bundler (Turbopack/Webpack)
+- Project type (app/api/empty)
+
+### ts-workspace
+
+A TypeScript workspace (monorepo) template using npm workspaces and TypeScript project references. Provides two subcommands:
+
+- **`init`** — Create a new workspace with shared tsconfig, package.json workspaces, and git setup
+- **`add`** — Add projects into an existing workspace using other templates (ts-lib, angular, nestjs, nextjs)
+
+Automatically manages workspace `package.json` entries, TypeScript project references, and tsconfig inheritance.
+
+```bash
+# Create a new workspace
+lb-scaffold new ts-workspace my-monorepo
+
+# Add a project into the workspace
+lb-scaffold new ts-workspace my-lib --workspace ./my-monorepo --template ts-lib
+```
+
+**Interactive prompts (init):**
+- Package manager (npm, Yarn, pnpm)
+- Initialize git repository?
+
+**Interactive prompts (add):**
+- Workspace root path
+- Template to use
+- Base path for the new project
 
 ## Configuration
 
 The scaffold CLI supports a configuration file (`.lbscaffold.json`) that allows you to register custom plugin directories and npm packages. This enables you to use your own templates alongside the built-in ones.
 
-### Config File Location
+### Config File Locations
 
-The CLI searches for `.lbscaffold.json` starting from the current directory and walking up the directory tree. This allows you to have project-specific or workspace-level configurations.
+The CLI supports two config file locations:
+
+- **Global**: `~/.lbscaffold.json` — provides machine-wide defaults
+- **Local**: `.lbscaffold.json` found by searching up from the current directory
+
+When both exist, local keys override global keys on a per-key basis. For example, if the local config defines `plugins`, it fully replaces the global `plugins`; keys not present locally fall through to the global config.
 
 ### Config Commands
 
-Initialize a new config file:
+Initialize a new config file in the current directory:
 
 ```bash
 lb-scaffold config init
+```
+
+Initialize the global config file:
+
+```bash
+lb-scaffold config init -g
 ```
 
 This creates a `.lbscaffold.json` file with a default plugin path:
@@ -194,6 +233,9 @@ Add a custom plugin directory:
 
 ```bash
 lb-scaffold config add ./my-templates/**
+
+# Add to global config
+lb-scaffold config add ./my-templates/** -g
 ```
 
 Remove a plugin directory:
@@ -202,17 +244,25 @@ Remove a plugin directory:
 lb-scaffold config remove ./my-templates/**
 ```
 
-List all configured plugin patterns:
+List all configured plugin patterns (shows merged config with source indicators):
 
 ```bash
 lb-scaffold config list
+
+# Show only global config
+lb-scaffold config list -g
 ```
 
 Show the full config file:
 
 ```bash
 lb-scaffold config show
+
+# Show only global config
+lb-scaffold config show -g
 ```
+
+All config subcommands accept `-g` / `--global` to target the global config (`~/.lbscaffold.json`) instead of the local one.
 
 ### Config File Format
 

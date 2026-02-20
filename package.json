@@ -6,7 +6,8 @@
         "starters/angular",
         "starters/nestjs",
         "starters/ts-lib",
-        "starters/ts-workspace"
+        "starters/ts-workspace",
+        "starters/nextjs"
     ],
     "scripts": {
         "build": "npm run build --workspaces",

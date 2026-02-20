@@ -1,4 +1,4 @@
-# @libria/scaffold-nestjs
+# @libria/scaffold-plugin-nestjs
 
 NestJS CLI wrapper template for [@libria/scaffold](https://github.com/LibriaForge/scaffold).
 
@@ -7,20 +7,20 @@ This plugin scaffolds new NestJS projects by wrapping `@nestjs/cli`, exposing it
 ## Installation
 
 ```bash
-npm install @libria/scaffold-nestjs
+npm install @libria/scaffold-plugin-nestjs
 ```
 
 ## Usage
 
 ```bash
 # Interactive — prompts for version first, then version-specific options
-scaffold new nestjs my-api
+lb-scaffold new nestjs my-api
 
 # Non-interactive — pass all options via CLI
-scaffold new nestjs my-api --version 11 --language TypeScript --package-manager pnpm
+lb-scaffold new nestjs my-api --version 11 --language TypeScript --package-manager pnpm
 
 # Show available options for a specific version
-scaffold new nestjs my-api --version 10 --help
+lb-scaffold new nestjs my-api --version 10 --help
 ```
 
 ## Supported Options

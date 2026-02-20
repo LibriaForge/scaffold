@@ -18,12 +18,13 @@
   },
   "type": "module",
   "scripts": {
-    "build": "cross-env NODE_ENV=production tsdown",
+    "build": "npm run typecheck && cross-env NODE_ENV=production tsdown",
     "build:dev": "tsdown",
     "build:generators": "cross-env NODE_ENV=production tsdown -c tsdown-generators.config.ts",
     "build:generators:dev": "tsdown -c tsdown-generators.config.ts",
     "build:all": "npm run build && npm run build:generators",
     "build:all:dev": "npm run build:dev && npm run build:generators:dev",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -32,7 +33,10 @@
     "clean": "npm run lint:fix && npm run format",
     "generate:angular": "node ./dist/cli/cli.mjs generate angular --output ../angular/src/angular.ts --force",
     "generate:nestjs": "node ./dist/cli/cli.mjs generate nestjs --output ../nestjs/src/nestjs.ts --force",
-    "generate:all": "npm run generate:angular && npm run generate:nestjs"
+    "generate:nextjs": "node ./dist/cli/cli.mjs generate nextjs --output ../nextjs/src/nextjs.ts --force",
+    "generate:all": "npm run generate:angular && npm run generate:nestjs && npm run generate:nextjs",
+    "build-and-generate-all": "npm run build:all && npm run generate:all",
+    "build-and-generate-all:dev": "npm run build:all:dev && npm run generate:all"
   },
   "repository": {
     "type": "git",
@@ -68,7 +72,7 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
-    "@libria/plugin-loader": "^2.0.0-alpha",
+    "@libria/plugin-loader": "^2.0.0",
     "commander": "^14.0.3"
   }
 }

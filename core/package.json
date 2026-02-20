@@ -1,6 +1,6 @@
 {
     "name": "@libria/scaffold-core",
-    "version": "0.3.2",
+    "version": "0.3.8",
     "description": "Core types and utilities for @libria/scaffold",
     "main": "dist/index.cjs",
     "module": "dist/index.mjs",
@@ -18,8 +18,9 @@
     },
     "type": "module",
     "scripts": {
-        "build": "cross-env NODE_ENV=production tsdown",
+        "build": "npm run typecheck && cross-env NODE_ENV=production tsdown",
         "build:dev": "tsdown",
+        "typecheck": "tsc --noEmit",
         "test": "vitest",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
@@ -64,6 +65,7 @@
         "vitest": "^2.0.0"
     },
     "dependencies": {
+        "@libria/plugin-loader": "^2.1.0",
         "fs-extra": "^11.3.3"
     }
 }

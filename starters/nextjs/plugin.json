@@ -1,0 +1,9 @@
+{
+  "id": "libria:scaffold:nextjs",
+  "name": "nextjs",
+  "pluginType": "scaffold-template",
+  "version": "1.0.0",
+  "description": "Wrapper template for NextJS",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts"
+}

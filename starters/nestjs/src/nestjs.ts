@@ -1,20 +1,22 @@
 import { execSync } from 'child_process';
 
 import { definePlugin, PluginContext } from '@libria/plugin-loader';
-import type {
+import {
     ScaffoldTemplatePlugin,
     ScaffoldTemplatePluginOption,
     ExecuteOptions,
+    SCAFFOLD_TEMPLATE_PLUGIN_TYPE,
+    OptionTypeMap,
 } from '@libria/scaffold-core';
 
 export interface NestJSOptions {
-    version: ScaffoldTemplatePluginOption<string>;
-    language: ScaffoldTemplatePluginOption<string>;
-    packageManager: ScaffoldTemplatePluginOption<string>;
-    strict: ScaffoldTemplatePluginOption<boolean>;
+    version: ScaffoldTemplatePluginOption<'string'>;
+    language: ScaffoldTemplatePluginOption<'string'>;
+    packageManager: ScaffoldTemplatePluginOption<'string'>;
+    strict: ScaffoldTemplatePluginOption<'boolean'>;
+    skipInstall: ScaffoldTemplatePluginOption<'boolean'>;
+    skipGit: ScaffoldTemplatePluginOption<'boolean'>;
 }
-
-export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';
 
 export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
     id: 'libria:scaffold:nestjs',
@@ -29,6 +31,7 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                     if (!options.version) {
                         return {
                             version: {
+                                type: 'string',
                                 flags: '--version <version>',
                                 description: 'NestJS version:',
                                 choices: ['11', '10'],
@@ -37,25 +40,43 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                         };
                     }
 
-                    const major = Number(options.version);
-                    const allOptions: Record<string, ScaffoldTemplatePluginOption> = {
+                    const allOptions: Record<
+                        string,
+                        ScaffoldTemplatePluginOption<keyof OptionTypeMap>
+                    > = {
                         version: {
+                            type: 'string',
                             flags: '--version <version>',
                             description: 'NestJS version:',
                             choices: ['11', '10'],
                             defaultValue: '11',
                         },
                         language: {
+                            type: 'string',
                             flags: '--language <value>',
                             description: 'Which programming language?',
                         },
                         packageManager: {
+                            type: 'string',
                             flags: '--package-manager <value>',
                             description: 'Which package manager would you like to use?',
                         },
                         strict: {
+                            type: 'boolean',
                             flags: '--strict',
                             description: 'Enable TypeScript strict mode?',
+                            defaultValue: false,
+                        },
+                        skipInstall: {
+                            type: 'boolean',
+                            flags: '--skip-install',
+                            description: 'Skip installing dependencies?',
+                            defaultValue: false,
+                        },
+                        skipGit: {
+                            type: 'boolean',
+                            flags: '--skip-git',
+                            description: 'Skip git initialization?',
                             defaultValue: false,
                         },
                     };
@@ -65,12 +86,15 @@ export default definePlugin<ScaffoldTemplatePlugin<NestJSOptions>>({
                 execute: async (options: ExecuteOptions<NestJSOptions>) => {
                     const { name, dryRun } = options;
                     const major = Number(options.version);
+                    console.log('Executing for version:', major);
                     const args: string[] = [];
 
                     if (options.language) args.push(`--language=${options.language}`);
                     if (options.packageManager)
                         args.push(`--package-manager=${options.packageManager}`);
                     args.push(options.strict ? '--strict' : '--strict=false');
+                    if (options.skipInstall) args.push('--skip-install');
+                    if (options.skipGit) args.push('--skip-git');
 
                     const cmd = `npx @nestjs/cli@${options.version} new ${name} ${args.join(' ')}`;
 

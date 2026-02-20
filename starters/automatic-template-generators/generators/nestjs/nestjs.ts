@@ -82,10 +82,41 @@ const GENERATE_FILE_CONFIG: GenerateFileConfig = {
 
 // ── Convenience wrapper functions ────────────────────────────────────────────
 
+// Options that the NestJS CLI supports but are not in the schematics schema
+const EXTRA_PROPERTIES: MergedProperty[] = [
+    {
+        name: 'skipInstall',
+        type: 'boolean',
+        description: 'Skip installing dependencies',
+        defaultValue: false,
+        supportedVersions: [],   // filled dynamically with all majors
+        promptType: 'confirm',
+        friendlyMessage: FRIENDLY_MESSAGES['skipInstall'] ?? 'Skip installing dependencies?',
+    },
+    {
+        name: 'skipGit',
+        type: 'boolean',
+        description: 'Skip git initialization',
+        defaultValue: false,
+        supportedVersions: [],   // filled dynamically with all majors
+        promptType: 'confirm',
+        friendlyMessage: FRIENDLY_MESSAGES['skipGit'] ?? 'Skip git initialization?',
+    },
+];
+
 export function mergeSchemas(
     schemas: { version: VersionInfo; schema: CliSchema }[],
 ): MergedProperty[] {
-    return sharedMergeSchemas(schemas, MERGE_CONFIG);
+    const merged = sharedMergeSchemas(schemas, MERGE_CONFIG);
+    const allMajors = schemas.map(s => s.version.major);
+
+    for (const extra of EXTRA_PROPERTIES) {
+        if (!merged.some(p => p.name === extra.name)) {
+            merged.push({ ...extra, supportedVersions: allMajors });
+        }
+    }
+
+    return merged;
 }
 
 export function generateFile(

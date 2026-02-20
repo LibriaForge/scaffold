@@ -1,11 +1,19 @@
 export const SCAFFOLD_TEMPLATE_PLUGIN_TYPE = 'scaffold-template';
 
-export type ScaffoldTemplatePluginOption<TValue = string | boolean | number> = {
+export type OptionTypeMap = {
+    string: string;
+    boolean: boolean;
+    number: number;
+    array: string[];
+};
+
+export type ScaffoldTemplatePluginOption<TType extends keyof OptionTypeMap> = {
+    readonly type: TType;
     readonly flags: string; // ex: --git-init
     readonly required?: boolean;
     readonly description: string;
-    readonly defaultValue?: TValue | TValue[];
-    readonly choices?: TValue[];
+    readonly defaultValue?: OptionTypeMap[TType] | OptionTypeMap[TType][];
+    readonly choices?: OptionTypeMap[TType][];
 };
 
 export type SubcommandDefinition = {
@@ -18,7 +26,9 @@ export type ResolvedOptions<TOpt extends object> = {
 };
 
 export type ExecuteOptions<TOpt extends object> = ScaffoldTemplatePluginOptions & {
-    [k in keyof TOpt]: TOpt[k] extends ScaffoldTemplatePluginOption<infer TValue> ? TValue : never;
+    [k in keyof TOpt]: TOpt[k] extends ScaffoldTemplatePluginOption<infer TValue>
+        ? OptionTypeMap[TValue]
+        : never;
 };
 
 export type ScaffoldTemplatePluginOptions = {
@@ -34,7 +44,7 @@ export interface ScaffoldTemplatePlugin<TOpt extends object = object> {
 
     getOptions(options: ScaffoldTemplatePluginOptions & Partial<ResolvedOptions<TOpt>>): Promise<
         Partial<{
-            [k in keyof TOpt]: ScaffoldTemplatePluginOption;
+            [k in keyof TOpt]: ScaffoldTemplatePluginOption<keyof OptionTypeMap>;
         }>
     >;
 
