@@ -25,7 +25,6 @@ const packagePaths = await Promise.all(
 
 const pluginManager = new PluginManager();
 await pluginManager.loadPlugins([...userPluginPaths, ...packagePaths]);
-await pluginManager.unloadPlugin('libria:scaffold:ts-lib');
 const program = new InteractiveCommand();
 program.name('lb-scaffold').description('Scaffold new projects from templates');
 
